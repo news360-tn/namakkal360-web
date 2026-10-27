@@ -13,7 +13,12 @@ const url = Astro.url, sp = url.searchParams;
 const lang = langOf(sp.get("lang") ?? Astro.cookies.get("lang")?.value);
 const f = sanitize(Object.fromEntries(sp));
 const db = (env as any).DB as D1Database;
-const [{ items, total }, alerts] = await Promise.all([list(db, { ...f, page: 0 }), f.type && f.type !== "power" ? Promise.resolve([]) : powerAlerts(db, f)]);
+// numbered pages, 15 news each (?page=2); power-cut notices are pinned on page 1
+const pg = Math.max(1, Math.min(500, parseInt(sp.get("page") ?? "1", 10) || 1));
+const [{ items, total }, alerts] = await Promise.all([
+  list(db, { ...f, page: pg - 1 }),
+  pg > 1 || (f.type && f.type !== "power") ? Promise.resolve([]) : powerAlerts(db, f)]);
+const pages = Math.max(1, Math.ceil(total / PAGE));
 const rest = items.filter((n) => !alerts.some((a) => a.id === n.id));
 
 const tk = f.taluk ? talukOf(f.taluk) : undefined;
@@ -21,9 +26,11 @@ const banner = tk ? { img: tk.banner, credit: tk.credit } : { img: DISTRICT.bann
 const heading = [f.place && tk ? placeOf(tk.id, f.place)?.[lang] : tk?.[lang], f.type ? typeOf(f.type)[lang] : ""].filter(Boolean).join(" · ") || tr(lang, "latest");
 
 /** link that keeps the other filters (and the language) */
-function link(change: Partial<Record<keyof Filter, string | undefined>>) {
+function link(change: Partial<Record<keyof Filter | "pg", string | undefined>>) {
   const p = new URLSearchParams();
   const next: Record<string, string | undefined> = { taluk: f.taluk, place: f.place, type: f.type, date: f.date, q: f.q, ...change };
+  const toPage = next.pg; delete next.pg;
+  if (toPage && toPage !== "1") next.page = toPage;
   for (const [k, v] of Object.entries(next)) if (v) p.set(k, v);
   if (lang === "en") p.set("lang", "en");
   const s = p.toString();
@@ -34,9 +41,16 @@ const off = "border-black/10 bg-white/70 hover:border-brand-fresh dark:border-wh
 const on = "border-transparent bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40";
 const row = "flex gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
-const apiQuery = new URLSearchParams(Object.entries({ ...f, page: undefined, lang }).filter(([, v]) => v != null && v !== "") as [string, string][]).toString();
+/** page numbers: 1 … 4 5 6 … 20 */
+const nums: (number | "…")[] = [];
+for (let i = 1; i <= pages; i++) {
+  if (i === 1 || i === pages || Math.abs(i - pg) <= 1) nums.push(i);
+  else if (nums[nums.length - 1] !== "…") nums.push("…");
+}
+const base = f.taluk ? `/?taluk=${f.taluk}` : "/";
+const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${pg}` : base;
 ---
-<Base lang={lang} path={f.taluk ? `/?taluk=${f.taluk}` : "/"} noindex={!!(f.place || f.type || f.date || f.q)}
+<Base lang={lang} path={canonicalPath} noindex={!!(f.place || f.type || f.date || f.q)}
   title={tk ? `${tk[lang]} ${tr(lang, "stories")}` : undefined}
   description={tk ? `${tk[lang]}: ${tk.places.map((p) => p[lang]).join(", ")} - ${tr(lang, "about")}` : undefined}
   jsonld={[{ "@context": "https://schema.org", "@type": "WebSite", name: "Namakkal 360", url: Astro.url.origin + "/", inLanguage: ["ta", "en"] }]}>
@@ -86,18 +100,28 @@ const apiQuery = new URLSearchParams(Object.entries({ ...f, page: undefined, lan
   <div class="my-4 flex items-baseline justify-between">
     <div>
       <h2 class="inline-block bg-linear-to-r from-brand-fresh via-sun to-red360 bg-clip-text text-xl font-extrabold text-transparent">{heading}</h2>
-      <span class="block text-[13px] font-semibold text-slate-500 dark:text-slate-400">{total} {tr(lang, "stories")}</span>
+      <span class="block text-[13px] font-semibold text-slate-500 dark:text-slate-400">{total} {tr(lang, "stories")}{pages > 1 && ` · ${tr(lang, "page")} ${pg} / ${pages}`}</span>
     </div>
     {(f.taluk || f.type || f.date || f.q) && <a href={lang === "en" ? "/?lang=en" : "/"} class="text-[13px] font-bold text-red360">{tr(lang, "showAll")}</a>}
   </div>
 
   <Fragment set:html={alerts.map((n) => alertHtml(n, lang)).join("")} />
 
-  <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-3" data-api={apiQuery} data-page="0" data-more={String(total > PAGE)}>
+  <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-3">
     <Fragment set:html={rest.map((n) => cardHtml(n, lang)).join("")} />
   </section>
   {!items.length && !alerts.length && <p class="py-10 text-center text-slate-500">{tr(lang, "empty")}</p>}
-  <div id="more" class="h-px"></div>
+  {pages > 1 && (
+    <nav aria-label="Pages" class="mt-8 flex flex-wrap items-center justify-center gap-2">
+      {pg > 1 && <a href={link({ pg: String(pg - 1) })} rel="prev" class="grid h-10 place-items-center rounded-full border border-black/10 bg-white/75 px-4 text-sm font-bold backdrop-blur-md transition active:scale-95 dark:border-white/10 dark:bg-slate-900/60">‹ {tr(lang, "prev")}</a>}
+      {nums.map((x) => x === "…"
+        ? <span class="px-1 text-slate-400">…</span>
+        : <a href={link({ pg: String(x) })} aria-current={x === pg ? "page" : undefined}
+            class:list={["grid size-10 place-items-center rounded-full text-sm font-bold transition active:scale-95",
+              x === pg ? "bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40" : "border border-black/10 bg-white/75 backdrop-blur-md hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60"]}>{x}</a>)}
+      {pg < pages && <a href={link({ pg: String(pg + 1) })} rel="next" class="grid h-10 place-items-center rounded-full border border-black/10 bg-white/75 px-4 text-sm font-bold backdrop-blur-md transition active:scale-95 dark:border-white/10 dark:bg-slate-900/60">{tr(lang, "next")} ›</a>}
+    </nav>
+  )}
 
   <button id="toTop" type="button" aria-label="Back to top"
     class="pointer-events-none fixed right-4 bottom-5 z-40 grid size-[46px] translate-y-2.5 place-items-center rounded-full bg-linear-to-br from-brand-fresh to-sky360 text-white opacity-0 shadow-lg transition data-[on]:pointer-events-auto data-[on]:translate-y-0 data-[on]:opacity-100">
@@ -106,21 +130,8 @@ const apiQuery = new URLSearchParams(Object.entries({ ...f, page: undefined, lan
 </Base>
 
 <script>
-  // more news while scrolling, back-to-top, "my area" (kept only in this browser)
-  const grid = document.getElementById("grid")!, more = document.getElementById("more")!, top = document.getElementById("toTop")!;
-  let busy = false;
-  new IntersectionObserver(async ([e]) => {
-    if (!e.isIntersecting || busy || grid.dataset.more !== "true") return;
-    busy = true;
-    const page = +(grid.dataset.page || 0) + 1;
-    try {
-      const r = await fetch(`/api/news?${grid.dataset.api}&page=${page}&format=html`);
-      const j = await r.json();
-      grid.insertAdjacentHTML("beforeend", j.html);
-      grid.dataset.page = String(page); grid.dataset.more = String(j.more);
-    } finally { busy = false; }
-  }, { rootMargin: "400px" }).observe(more);
-
+  // back-to-top, "my area" (kept only in this browser)
+  const top = document.getElementById("toTop")!;
   addEventListener("scroll", () => top.toggleAttribute("data-on", scrollY > 600), { passive: true });
   top.onclick = () => scrollTo({ top: 0 });
 

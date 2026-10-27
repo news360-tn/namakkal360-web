@@ -11,7 +11,7 @@ export interface News {
   power_from: number | null; power_to: number | null;
 }
 export interface Filter { taluk?: string; place?: string; type?: string; date?: string; q?: string; page?: number }
-export const PAGE = 12;
+export const PAGE = 15;      // news per page
 
 /** today in India (IST), YYYY-MM-DD */
 export const istDay = (offsetDays = 0, now = Date.now()) => new Date(now + 5.5 * 3600e3 + offsetDays * 864e5).toISOString().slice(0, 10);
