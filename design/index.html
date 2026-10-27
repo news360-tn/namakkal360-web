@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>நாமக்கல் 360 - Namakkal 360</title>
+<meta name="description" content="Namakkal district news - every taluk and town, in Tamil and English.">
+<meta name="theme-color" content="#0B5D3B">
+<link rel="icon" href="assets/logo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i>
+  <svg><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grain)"/></svg></div>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/logo-96.png" alt=""><b><span data-t="brand">நாமக்கல்</span> <i>360</i></b></a>
+    <button class="ib" id="sbtn" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+    <div class="lang"><button data-l="ta" aria-pressed="true">த</button><button data-l="en" aria-pressed="false">EN</button></div>
+    <button class="ib" id="theme" aria-label="Dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </div>
+  <div class="wrap searchbar" id="sbar"><input id="q" type="search" data-ph="searchPh" placeholder="செய்தி அல்லது ஊர் தேடுங்கள்"></div>
+</header>
+
+<main class="wrap">
+  <figure class="banner"><img id="bimg" alt=""><div><h1 id="btitle"></h1><p id="bsub"></p></div><small id="bcredit"></small><button class="star" id="star" hidden aria-pressed="false"></button></figure>
+  <nav class="chips" id="taluks" aria-label="Area"></nav>
+  <nav class="chips sub" id="places" hidden></nav>
+  <div class="bar">
+    <nav class="chips" id="types" aria-label="Type"></nav>
+    <select class="date" id="date" aria-label="Date"></select>
+    <input class="pick" id="pick" type="date" hidden max="2026-10-27">
+  </div>
+  <div class="head"><div><h2 id="htitle"></h2><span id="hcount"></span></div><button id="clear" hidden data-t="clear">அனைத்தும் காட்டு</button></div>
+  <div id="alerts"></div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<footer><div class="wrap">
+  <span data-t="about">நாமக்கல் மாவட்டத்தின் அனைத்து ஊர் செய்திகளும் - தமிழிலும் ஆங்கிலத்திலும்.</span>
+  <a href="https://www.instagram.com/namakkal.360/" target="_blank" rel="noopener">Instagram @namakkal.360</a>
+</div></footer>
+
+<div class="scrim" id="scrim"></div>
+<article class="sheet" id="sheet" role="dialog" aria-modal="true"></article>
+<button class="totop" id="totop" aria-label="Back to top"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<div class="note">DESIGN PREVIEW</div>
+
+<script>
+/* Place photos (owner-provided): used ONLY for the area banner. News pictures come from each story on the real site. */
+const P = n => `assets/places/${n}.webp`;
+const BANNER = { "":[P("banner-fort-park"),"நாமக்கல் மாவட்ட நிர்வாகம்"], namakkal:[P("namakkal-fort"),"Ssriram mt · CC BY-SA 4.0"], rasipuram:[P("rasipuram"),"Jagadeeswarann99 · CC BY 4.0"],
+  tiruchengode:[P("tiruchengode"),"Janani Muthu · CC BY-SA 4.0"], kumarapalayam:[P("kumarapalayam-cauvery"),"Wikimedia Commons · CC BY-SA 3.0"], pvelur:[P("banner-cauvery"),"நாமக்கல் மாவட்ட நிர்வாகம்"],
+  sendamangalam:[P("sendamangalam"),"D Neethidoss · CC BY-SA 4.0"], mohanur:[P("banner-fort-park"),"நாமக்கல் மாவட்ட நிர்வாகம்"], kolli:[P("banner-kolli-mist"),"நாமக்கல் மாவட்ட நிர்வாகம்"] };
+
+const TALUKS = [
+  ["namakkal","நாமக்கல்","Namakkal",[["namakkal","நாமக்கல்","Namakkal"],["siluvampatti","சிலுவம்பட்டி","Siluvampatti"],["erumapatti","எருமப்பட்டி","Erumapatti"],["puduchatram","புதுச்சத்திரம்","Puduchatram"]]],
+  ["rasipuram","இராசிபுரம்","Rasipuram",[["rasipuram","இராசிபுரம்","Rasipuram"],["vennandur","வெண்ணந்தூர்","Vennandur"],["namagiripettai","நாமகிரிப்பேட்டை","Namagiripettai"]]],
+  ["tiruchengode","திருச்செங்கோடு","Tiruchengode",[["tiruchengode","திருச்செங்கோடு","Tiruchengode"],["mallasamudram","மல்லசமுத்திரம்","Mallasamudram"],["velagoundampatti","வேலகவுண்டம்பட்டி","Velagoundampatti"]]],
+  ["kumarapalayam","குமாரபாளையம்","Kumarapalayam",[["kumarapalayam","குமாரபாளையம்","Kumarapalayam"],["pallipalayam","பள்ளிபாளையம்","Pallipalayam"],["veppadai","வெப்படை","Veppadai"]]],
+  ["pvelur","ப.வேலூர்","P. Velur",[["velur","பரமத்தி வேலூர்","Paramathi Velur"],["olappalayam","ஓலப்பாளையம்","Olappalayam"],["jedarpalayam","ஜேடர்பாளையம்","Jedarpalayam"]]],
+  ["sendamangalam","சேந்தமங்கலம்","Sendamangalam",[["sendamangalam","சேந்தமங்கலம்","Sendamangalam"],["kalappanaickenpatti","காளப்பநாயக்கன்பட்டி","Kalappanaickenpatti"],["kuppanaickanur","குப்பநாயக்கனூர்","Kuppanaickanur"]]],
+  ["mohanur","மோகனூர்","Mohanur",[["mohanur","மோகனூர்","Mohanur"]]],
+  ["kolli","கொல்லிமலை","Kolli Hills",[["semmedu","செம்மேடு","Semmedu"]]]
+].map(([id,ta,en,pl])=>({id,ta,en,places:pl.map(([i,t,e])=>({id:i,ta:t,en:e}))}));
+const TYPES = [["power","மின்தடை","Power cut","var(--t-power)"],["collector","அரசு அறிவிப்பு","Govt notice","var(--t-collector)"],["accident","விபத்து","Accident","var(--t-accident)"],
+  ["crime","குற்றம்","Crime","var(--t-crime)"],["rain","மழை","Rain","var(--t-rain)"],["civic","மக்கள் பிரச்னை","Civic","var(--t-civic)"],["edu","கல்வி","Education","var(--t-edu)"],["event","நிகழ்ச்சி","Events","var(--t-event)"]]
+  .map(([id,ta,en,c])=>({id,ta,en,c}));
+const ICON = {power:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',collector:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',accident:'<path d="M5 17h14l-1.5-6h-11zM7 17v2M17 17v2M8 11l1.5-4h5L16 11"/>',
+  crime:'<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6z"/>',rain:'<path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.5 1.5A3.5 3.5 0 0 1 17 15M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+  civic:'<path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M10 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM21 20v-2a4 4 0 0 0-3-3.9"/>',edu:'<path d="m2 9 10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"/>',event:'<path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.6 6.5 19.5l1-6.2L3 8.9 9 8z"/>'};
+
+const NEWS = [
+ ["RN-140","2026-10-27","10:14","namakkal","namakkal","collector","நாமக்கல்லில் மரவள்ளி விவசாயிகள் பிரச்னை: 30-ல் முத்தரப்பு கூட்டம் என கலெக்டர் அறிவிப்பு","Collector calls tripartite meeting on Oct 30 over tapioca farmers' issues",
+  "நாமக்கல் மாவட்டத்தில் மரவள்ளி கிழங்கு விவசாயிகள் சந்திக்கும் பிரச்னைகளுக்குத் தீர்வு காண முத்தரப்பு கூட்டம் அறிவிக்கப்பட்டுள்ளது. வரும் 30ம் தேதி மாலை 4:30 மணிக்கு நாமக்கல் கலெக்டர் அலுவலகத்தில் இக்கூட்டம் நடைபெற உள்ளது.",
+  "A tripartite meeting has been called to resolve tapioca farmers' problems in Namakkal district. It will be held at the Collectorate on October 30 at 4.30 pm.",
+  [["நாள்","Date","அக்டோபர் 30, மாலை 4:30","Oct 30, 4.30 pm"],["இடம்","Venue","கலெக்டர் அலுவலகம்","Collectorate"],["யார்","Who","ஆட்சியர் மதுபாலன்","Collector Madhubalan"]]],
+ ["RN-131","2026-10-27","02:14","sendamangalam","kalappanaickenpatti","power","காளப்பநாயக்கன்பட்டி துணை மின் நிலையப் பராமரிப்பு: காலை 9 முதல் மதியம் 2 வரை மின் தடை","Kalappanaickenpatti substation maintenance: power cut 9 am - 2 pm",
+  "காளப்பநாயக்கன்பட்டி துணை மின் நிலையத்தில் மாதாந்திரப் பராமரிப்புப் பணி காரணமாக காலை 9 மணி முதல் மதியம் 2 மணி வரை மின் தடை.","Monthly maintenance at Kalappanaickenpatti substation: no power from 9 am to 2 pm.",
+  [["நேரம்","Time","காலை 9 - மதியம் 2","9 am - 2 pm"]],[9,14]],
+ ["RN-135","2026-10-27","06:25","tiruchengode","velagoundampatti","accident","வேலகவுண்டம்பட்டி அருகே தனியார் பேருந்து மோதி தொழிலாளி உயிரிழப்பு","Worker killed after private bus hits him near Velagoundampatti",
+  "வேலகவுண்டம்பட்டி அருகே தனியார் பேருந்து மோதி ஒரு கூலித் தொழிலாளி உயிரிழந்தார். போலீசார் வழக்குப் பதிவு செய்து விசாரணை நடத்தி வருகின்றனர்.","A daily-wage worker died after a private bus hit him near Velagoundampatti. Police have registered a case.",[]],
+ ["RN-133","2026-10-27","06:25","namakkal","siluvampatti","collector","6 மாதம் முதல் 5 வயது குழந்தைகளுக்கு வைட்டமின் ஏ திரவம் வழங்கும் முகாம்","Vitamin A camp for 90,703 children aged 6 months to 5 years",
+  "நாமக்கல் மாவட்டத்தில் 90,703 குழந்தைகளுக்கு வைட்டமின் ஏ திரவம் வழங்கப்பட உள்ளது.","Vitamin A will be given to 90,703 children in Namakkal district.",[["குழந்தைகள்","Children","90,703","90,703"]]],
+ ["RN-132","2026-10-27","06:25","pvelur","olappalayam","rain","ப.வேலூர் அருகே மழைநீர் வடிகால் ஆக்கிரமிப்பால் 30 ஏக்கர் பயிர் நீரில் மூழ்கி நாசம்","30 acres of crops submerged near P. Velur as drain is encroached",
+  "ஓலப்பாளையம் பகுதியில் மழைநீர் வடிகால் ஆக்கிரமிப்பால் தண்ணீர் தேங்கி 30 ஏக்கர் பயிர்கள் நீரில் மூழ்கின.","Water stagnated after a drain was encroached at Olappalayam, submerging 30 acres of crops.",[]],
+ ["RN-138","2026-10-27","06:25","sendamangalam","kuppanaickanur","rain","சேந்தமங்கலம் அருகே 100 ஆண்டு புளியமரம் சாலையில் சாய்ந்தது","100-year-old tamarind tree falls across road near Sendamangalam",
+  "குப்பநாயக்கனூர் பைபாஸ் அருகே 100 ஆண்டு பழமையான புளியமரம் வேரோடு சாய்ந்து சாலையில் விழுந்தது.","A 100-year-old tamarind tree fell across the road near the Kuppanaickanur bypass.",[]],
+ ["RN-137","2026-10-27","06:25","mohanur","mohanur","crime","மோகனூரில் தடை செய்யப்பட்ட புகையிலை விற்ற 2 பேர் கைது","Two held for selling banned tobacco in Mohanur",
+  "மோகனூர் பகுதிகளில் தடை செய்யப்பட்ட புகையிலை பொருட்கள் விற்ற இரண்டு பேர் கைது செய்யப்பட்டனர்.","Two people were arrested for selling banned tobacco around Mohanur.",[]],
+ ["RN-130","2026-10-27","02:14","tiruchengode","tiruchengode","accident","திருச்செங்கோடு அருகே விபத்தில் காயமடைந்த இளைஞரை தனது காரில் மருத்துவமனையில் சேர்த்த அமைச்சர்","Minister rushes injured youth to hospital in his own car near Tiruchengode",
+  "இருசக்கர வாகன விபத்தில் காயமடைந்த இளைஞரை அமைச்சர் தனது சொந்த வாகனத்தில் மருத்துவமனைக்கு அழைத்துச் சென்றார்.","The minister took a youth injured in a bike accident to hospital in his own car.",[]],
+ ["RN-129","2026-10-26","22:23","namakkal","namakkal","collector","நாமக்கல் குறைதீர் கூட்டத்தில் 509 மனுக்கள் பெறப்பட்டன","509 petitions received at Namakkal grievance meeting",
+  "நாமக்கல் கலெக்டர் அலுவலகத்தில் நடந்த மக்கள் குறைதீர் கூட்டத்தில் 509 கோரிக்கை மனுக்கள் பெறப்பட்டன.","509 petitions were received at the grievance meeting at the Collectorate.",[["மனுக்கள்","Petitions","509","509"]]],
+ ["RN-124","2026-10-26","14:05","rasipuram","rasipuram","event","குவைத்தில் வாழும் ராசிபுரம் இசை சகோதரிகள் ராசிபுரத்தில் அரங்கேற்றம்","Kuwait-based Rasipuram music sisters debut on home stage",
+  "குவைத்தில் வசிக்கும் ராசிபுரத்தைச் சேர்ந்த இசை சகோதரிகள் ராசிபுரத்தில் அரங்கேற்றம் செய்தனர்.","Music sisters from Rasipuram living in Kuwait gave their debut concert at home.",[]],
+ ["RN-118","2026-10-26","09:10","tiruchengode","mallasamudram","edu","மல்லசமுத்திரம் அரசு ஆண்கள் பள்ளியில் பள்ளி மேலாண்மைக் குழு கூட்டம்","School management committee meeting at Mallasamudram Govt Boys' School",
+  "மல்லசமுத்திரம் அரசு ஆண்கள் மேல்நிலைப் பள்ளியில் பள்ளி மேலாண்மைக் குழு மறுகட்டமைப்பு கூட்டம் நடைபெற்றது.","A school management committee meeting was held at Mallasamudram Govt Boys' School.",[]],
+ ["RN-111","2026-10-26","08:30","kumarapalayam","veppadai","crime","வெப்படையில் சூதாட்டம்: 8 பேர் கைது, ரூ.1,47,000 பறிமுதல்","Gambling in Veppadai: 8 arrested, ₹1,47,000 seized",
+  "வெப்படையில் சூதாடிய எட்டு பேர் கைது செய்யப்பட்டனர். ரூ.1,47,000 பறிமுதல் செய்யப்பட்டது.","Eight people were arrested for gambling in Veppadai; ₹1,47,000 was seized.",[["கைது","Arrested","8 பேர்","8 people"]]]
+].map(([id,d,t,tk,pl,ty,ta,en,sta,sen,facts,power])=>({id,d,t,tk,pl,ty,ta,en,sta,sen,facts,power}));
+
+/* each story's OWN picture (from the pipeline). Preview: the clean photo area of the posted reel cover; the real site uses the story's clean images */
+const IMG = {
+"RN-140": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793076695/news360/fhgtyxr6wpizmlmiqjmi.jpg",
+"RN-131": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793088707/news360/tl3ylnffv3b47gozm3id.jpg",
+"RN-135": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793065000/news360/of02czdnmo9nrcrvbqxu.jpg",
+"RN-133": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793064953/news360/qmcm8uqbj2njsjhoysbs.jpg",
+"RN-132": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793062680/news360/ugwl00vzargxbacjlqbi.jpg",
+"RN-138": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793064831/news360/gw53vdjcngg6tsucglme.jpg",
+"RN-137": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793064890/news360/unuflhzcz3c5z5y3a6tt.jpg",
+"RN-130": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793047920/news360/cl6qnnh3rc6dsazrro9v.jpg",
+"RN-129": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793033915/news360/pt5vqdsmv7yradga2zix.jpg",
+"RN-124": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793029036/news360/yakmmqpfxgmpr3hohol5.jpg",
+"RN-118": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793033864/news360/rfaivo1hzrkdoxlrdu7b.jpg",
+"RN-111": "https://res.cloudinary.com/bgk9wm1u/image/upload/c_crop,g_north,w_1.0,h_0.34,y_0.6/w_720/v1793028944/news360/cc3jckxyfb1cizgfjuan.jpg"
+};
+const TX = {
+ ta:{brand:"நாமக்கல்",searchPh:"செய்தி அல்லது ஊர் தேடுங்கள்",all:"அனைத்தும்",district:"நாமக்கல் மாவட்டம்",distSub:"8 தாலுகாக்கள் · அனைத்து ஊர் செய்திகள்",allOf:"முழு",
+   latest:"சமீபத்திய செய்திகள்",n:"செய்திகள்",clear:"அனைத்தும் காட்டு",empty:"இந்தத் தேர்வில் செய்தி இல்லை.",anyDate:"எல்லா நாளும்",today:"இன்று",yest:"நேற்று",w:"இந்த வாரம்",pick:"தேதி தேர்வு…",
+   power:"மின்தடை அறிவிப்பு",place:"இடம்",mine:"என் பகுதி",setMine:"என் பகுதியாக வை",share:"WhatsApp-ல் பகிர்",reel:"ரீல் பார்க்க",about:"நாமக்கல் மாவட்டத்தின் அனைத்து ஊர் செய்திகளும் - தமிழிலும் ஆங்கிலத்திலும்."},
+ en:{brand:"Namakkal",searchPh:"Search news or town",all:"All",district:"Namakkal District",distSub:"8 taluks · news from every town",allOf:"All of",
+   latest:"Latest news",n:"stories",clear:"Show all",empty:"No news for this choice.",anyDate:"Any day",today:"Today",yest:"Yesterday",w:"This week",pick:"Pick a date…",
+   power:"Power cut notice",place:"Place",mine:"My area",setMine:"Set as my area",share:"Share on WhatsApp",reel:"Watch reel",about:"News from every town in Namakkal district - in Tamil and English."}
+};
+const TODAY="2026-10-27", S={l:"ta",tk:"",pl:"",ty:"",dt:"any",day:"",q:""};
+const $=s=>document.querySelector(s), t=k=>TX[S.l][k], N=o=>o[S.l];
+const tk=id=>TALUKS.find(x=>x.id===id), ty=id=>TYPES.find(x=>x.id===id);
+const placeOf=n=>{const p=tk(n.tk).places.find(p=>p.id===n.pl);return p?N(p):N(tk(n.tk))};
+const ago=d=>Math.round((new Date(TODAY)-new Date(d))/864e5);
+const when=n=>(ago(n.d)===0?t("today"):ago(n.d)===1?t("yest"):n.d)+" · "+n.t;
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+function chip(label,on,fn,dot){const b=document.createElement("button");b.className="chip";b.setAttribute("aria-pressed",on);b.innerHTML=(dot?`<i class="dot" style="--c:${dot}"></i>`:"")+label;b.onclick=fn;return b}
+function list(){return NEWS.filter(n=>(!S.tk||n.tk===S.tk)&&(!S.pl||n.pl===S.pl)&&(!S.ty||n.ty===S.ty)
+  &&(S.dt==="any"||(S.dt==="today"&&ago(n.d)===0)||(S.dt==="yest"&&ago(n.d)===1)||(S.dt==="w"&&ago(n.d)<7)||(S.dt==="pick"&&n.d===S.day))
+  &&(!S.q||(n.ta+n.en+placeOf(n)).toLowerCase().includes(S.q.toLowerCase())))
+  .sort((a,b)=>b.d.localeCompare(a.d)||((ME.seen[b.ty]||0)+(b.tk===ME.area?3:0))-((ME.seen[a.ty]||0)+(a.tk===ME.area?3:0))||b.t.localeCompare(a.t))}
+
+/* reader's interest - kept only in this browser */
+const ME={area:"",seen:{}};
+try{Object.assign(ME,JSON.parse(localStorage.getItem("n360me")||"{}"))}catch(e){}
+const saveMe=()=>{try{localStorage.setItem("n360me",JSON.stringify(ME))}catch(e){}};
+const PAGE=6; let shown=PAGE, io;
+function reveal(){
+  if(io) io.disconnect();
+  io=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return;
+    if(e.target.classList.contains("more")){ shown+=PAGE; render(true); } else { e.target.classList.add("show"); io.unobserve(e.target); } }),{rootMargin:"0px 0px 200px 0px"});
+  document.querySelectorAll(".card:not(.show),.more").forEach(c=>io.observe(c));
+}
+function render(keep){
+  if(!keep) shown=PAGE;
+  document.documentElement.lang=S.l;
+  document.querySelectorAll("[data-t]").forEach(e=>e.textContent=t(e.dataset.t));
+  document.querySelectorAll("[data-ph]").forEach(e=>e.placeholder=t(e.dataset.ph));
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===S.l));
+  const T=S.tk&&tk(S.tk), [img,cr]=BANNER[S.tk]||BANNER[""];
+  $("#bimg").src=img; $("#bcredit").textContent="📷 "+cr;
+  $("#btitle").textContent=T?N(T):t("district"); $("#bsub").textContent=T?T.places.map(N).join(" · "):t("distSub");
+  const a=$("#taluks"); a.innerHTML=""; a.append(chip(t("all"),!S.tk,()=>set({tk:"",pl:""})));
+  [...TALUKS].sort((x,y)=>(y.id===ME.area)-(x.id===ME.area)).forEach(x=>a.append(chip((x.id===ME.area?"⭐ ":"")+N(x),S.tk===x.id,()=>set({tk:S.tk===x.id?"":x.id,pl:""}))));
+  const st=$("#star"); st.hidden=!T; if(T){const mine=ME.area===T.id; st.setAttribute("aria-pressed",mine); st.textContent=(mine?"⭐ ":"☆ ")+(mine?t("mine"):t("setMine"));
+    st.onclick=()=>{ME.area=mine?"":T.id; saveMe(); render(true)}}
+  const p=$("#places"); p.innerHTML=""; p.hidden=!T;
+  if(T){p.append(chip(`${t("allOf")} ${N(T)}`,!S.pl,()=>set({pl:""})));T.places.forEach(x=>p.append(chip(N(x),S.pl===x.id,()=>set({pl:S.pl===x.id?"":x.id}))))}
+  const y=$("#types"); y.innerHTML=""; y.append(chip(t("all"),!S.ty,()=>set({ty:""})));
+  TYPES.forEach(x=>{const b=chip(N(x),S.ty===x.id,()=>set({ty:S.ty===x.id?"":x.id}),x.c);b.style.setProperty("--c",x.c);b.classList.add("tchip");y.append(b)});
+  $("#date").innerHTML=[["any",t("anyDate")],["today",t("today")],["yest",t("yest")],["w",t("w")],["pick",t("pick")]].map(([v,l])=>`<option value="${v}" ${S.dt===v?"selected":""}>${l}</option>`).join("");
+  $("#pick").hidden=S.dt!=="pick"; $("#pick").value=S.day;
+  const L=list(), alerts=L.filter(n=>n.power&&ago(n.d)<=1), rest=L.filter(n=>!alerts.includes(n));
+  $("#htitle").textContent=[S.pl?placeOf({tk:S.tk,pl:S.pl}):T?N(T):"",S.ty?N(ty(S.ty)):""].filter(Boolean).join(" · ")||t("latest");
+  $("#hcount").textContent=`${L.length} ${t("n")}`; $("#clear").hidden=!(S.tk||S.ty||S.dt!=="any"||S.q);
+  $("#alerts").innerHTML=alerts.map(n=>{const[s,e]=n.power,x=v=>((v-6)/16*100).toFixed(1);return `<div class="alert" data-id="${n.id}"><div class="ic">${svg("power")}</div><div style="flex:1">
+    <small>${t("power")} · ${placeOf(n)} · ${when(n)}</small><h3>${N({ta:n.ta,en:n.en})}</h3><div class="tb"><span style="left:${x(s)}%;right:${100-x(e)}%"></span></div></div></div>`}).join("");
+  const page=rest.slice(0,shown);
+  $("#grid").innerHTML=rest.length?page.map(n=>{const c=ty(n.ty);return `<article class="card" data-id="${n.id}" tabindex="0" style="--c:${c.c}">
+    <div class="ph" aria-hidden="true">${IMG[n.id]?`<img loading="lazy" src="${IMG[n.id]}" alt="">`:svg(n.ty)}</div><div class="in"><div class="meta"><span class="tag">${N(c)}</span><span>· ${placeOf(n)}</span></div>
+    <h3>${N({ta:n.ta,en:n.en})}</h3><time>${when(n)}</time></div></article>`}).join("")+(rest.length>shown?'<div class="more"></div>':""):(alerts.length?"":`<p class="empty">${t("empty")}</p>`);
+  document.querySelectorAll("[data-id]").forEach(e=>{e.onclick=()=>openStory(e.dataset.id);e.onkeydown=k=>{if(k.key==="Enter")openStory(e.dataset.id)}});
+  if(keep) document.querySelectorAll(".card").forEach((c,i)=>{ if(i<shown-PAGE) c.classList.add("show") });
+  reveal();
+}
+function set(o){Object.assign(S,o);render()}
+function openStory(id){
+  const n=NEWS.find(x=>x.id===id), c=ty(n.ty), T=N(tk(n.tk)), pn=placeOf(n);
+  ME.seen[n.ty]=(ME.seen[n.ty]||0)+1; saveMe();
+  const facts=[[t("place"),pn===T?pn:`${pn}, ${T}`],...n.facts.map(f=>[S.l==="ta"?f[0]:f[1],S.l==="ta"?f[2]:f[3]])];
+  $("#sheet").innerHTML=`<button class="close" id="x" aria-label="Close">✕</button><div class="ph" style="--c:${c.c}">${IMG[n.id]?`<img src="${IMG[n.id]}" alt="">`:svg(n.ty)}</div><div class="in">
+    <div class="meta"><span class="tag" style="--c:${c.c}">${N(c)}</span><span>· ${pn} · ${when(n)}</span></div><h2>${N({ta:n.ta,en:n.en})}</h2>
+    <p class="story">${N({ta:n.sta,en:n.sen})}</p><dl class="facts">${facts.map(f=>`<div><dt>${f[0]}</dt><dd>${f[1]}</dd></div>`).join("")}</dl>
+    <div class="act"><a class="wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(N({ta:n.ta,en:n.en}))}">${t("share")}</a><a class="ig" target="_blank" rel="noopener" href="https://www.instagram.com/namakkal.360/">▶ ${t("reel")}</a></div></div>`;
+  document.body.classList.add("open"); $("#x").onclick=close; $("#x").focus();
+}
+function close(){document.body.classList.remove("open")}
+$("#scrim").onclick=close; addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>{set({l:b.dataset.l});try{localStorage.setItem("n360l",S.l)}catch(e){}});
+$("#date").onchange=e=>set({dt:e.target.value,day:e.target.value==="pick"?S.day:""});
+$("#pick").onchange=e=>set({day:e.target.value});
+$("#clear").onclick=()=>{$("#q").value="";set({tk:"",pl:"",ty:"",dt:"any",day:"",q:""})};
+$("#sbtn").onclick=()=>{$("#sbar").classList.toggle("on");$("#q").focus()};
+$("#q").oninput=e=>set({q:e.target.value.trim()});
+$("#theme").onclick=()=>{const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=d?"light":"dark";try{localStorage.setItem("n360t",r.dataset.theme)}catch(e){}};
+try{const l=localStorage.getItem("n360l");if(l)S.l=l;const th=localStorage.getItem("n360t");if(th)document.documentElement.dataset.theme=th}catch(e){}
+const U=new URLSearchParams(location.search);if(["ta","en"].includes(U.get("lang")))S.l=U.get("lang");if(U.get("taluk"))S.tk=U.get("taluk");if(["light","dark"].includes(U.get("theme")))document.documentElement.dataset.theme=U.get("theme");
+if(!U.get("taluk")&&ME.area) S.tk=ME.area;      // returning reader: their own area first
+addEventListener("scroll",()=>$("#totop").classList.toggle("on",scrollY>600),{passive:true});
+$("#totop").onclick=()=>scrollTo({top:0});
+render();
+</script>
+</body>
+</html>

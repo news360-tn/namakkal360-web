@@ -1,0 +1,88 @@
+---
+/* Page frame: header, footer, Namakkal Fort background, drifting smoke. Tailwind classes only. */
+import "../styles/global.css";
+import { tr, type Lang } from "../lib/i18n";
+interface Props { lang: Lang; title?: string; description?: string; image?: string }
+const { lang, title, description, image } = Astro.props;
+const pageTitle = title ? `${title} - ${tr(lang, "brand")} 360` : `${tr(lang, "brand")} 360 - ${tr(lang, "tagline")}`;
+const desc = description ?? tr(lang, "about");
+const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ? "en" : "ta");
+---
+<!doctype html>
+<html lang={lang} class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{pageTitle}</title>
+  <meta name="description" content={desc} />
+  <meta name="theme-color" content="#0b5d3b" />
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={desc} />
+  <meta property="og:image" content={image ?? new URL("/logo-512.png", Astro.url).href} />
+  <link rel="icon" href="/logo-96.png" />
+  <link rel="apple-touch-icon" href="/logo-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script is:inline>
+    // theme before first paint: saved choice, else the phone setting
+    try { const t = localStorage.getItem("n360t") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body class="relative isolate flex min-h-screen flex-col bg-stone-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+  <!-- Namakkal Fort, very light, like a shadow -->
+  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-20 bg-[url(/places/namakkal-fort.webp)] bg-cover bg-[center_35%] opacity-10 blur-[1px] grayscale-[.35] dark:opacity-[.07] dark:brightness-75"></div>
+  <!-- drifting smoke in the logo colours -->
+  <div aria-hidden="true" class="pointer-events-none fixed -inset-[10%] -z-10 overflow-hidden">
+    <i class="absolute -top-[8vmax] -left-[12vmax] h-[42vmax] w-[60vmax] animate-drift-1 rounded-full bg-[radial-gradient(closest-side,#22c55e,transparent)] opacity-60 blur-[70px] motion-reduce:animate-none"></i>
+    <i class="absolute top-[18vh] -right-[14vmax] h-[36vmax] w-[48vmax] animate-drift-2 rounded-full bg-[radial-gradient(closest-side,#facc15,transparent)] opacity-60 blur-[70px] motion-reduce:animate-none"></i>
+    <i class="absolute -bottom-[18vmax] left-[20vw] h-[40vmax] w-[52vmax] animate-drift-3 rounded-full bg-[radial-gradient(closest-side,#38bdf8,transparent)] opacity-45 blur-[70px] motion-reduce:animate-none"></i>
+    <i class="absolute right-[12vw] bottom-[8vh] h-[24vmax] w-[30vmax] animate-drift-1 rounded-full bg-[radial-gradient(closest-side,#f97316,transparent)] opacity-40 blur-[70px] motion-reduce:animate-none"></i>
+    <i class="absolute top-[30vh] left-[45vw] h-[26vmax] w-[34vmax] animate-drift-2 rounded-full bg-[radial-gradient(closest-side,#ec4899,transparent)] opacity-20 blur-[80px] motion-reduce:animate-none"></i>
+  </div>
+
+  <header class="sticky top-0 z-30 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white shadow-[0_6px_24px_-10px_rgba(11,93,59,.55)]">
+    <div class="mx-auto flex h-[62px] max-w-[1120px] items-center gap-2.5 px-4">
+      <a href={lang === "en" ? "/?lang=en" : "/"} class="mr-auto flex items-center gap-2.5">
+        <img src="/logo-96.png" alt="" width="40" height="40" class="size-10 rounded-full ring-2 ring-white/90" />
+        <b class="text-[19px] font-extrabold tracking-tight whitespace-nowrap max-[380px]:text-[17px]">{tr(lang, "brand")} <span class="bg-linear-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">360</span></b>
+      </a>
+      <button id="searchBtn" type="button" aria-label="Search" class="grid size-[38px] place-items-center rounded-full bg-white/20 transition active:scale-95">
+        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+      </button>
+      <a href={other.pathname + other.search} id="langLink" data-lang={lang === "ta" ? "en" : "ta"} class="flex rounded-full bg-white/20 p-[3px] text-[13px] font-bold">
+        <span class:list={["rounded-full px-3 py-[5px]", lang === "ta" ? "bg-white text-brand" : "text-white/80"]}>த</span>
+        <span class:list={["rounded-full px-3 py-[5px]", lang === "en" ? "bg-white text-brand" : "text-white/80"]}>EN</span>
+      </a>
+      <button id="themeBtn" type="button" aria-label="Light / dark" class="grid size-[38px] place-items-center rounded-full bg-white/20 transition active:scale-95">
+        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+      </button>
+    </div>
+    <form id="searchBar" action="/" method="get" class="mx-auto hidden max-w-[1120px] px-4 pb-3">
+      {lang === "en" && <input type="hidden" name="lang" value="en" />}
+      <input name="q" type="search" placeholder={tr(lang, "search")} value={Astro.url.searchParams.get("q") ?? ""}
+        class="h-11 w-full rounded-xl bg-white/95 px-3.5 text-slate-900 outline-none placeholder:text-slate-500" />
+    </form>
+    <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
+  </header>
+
+  <main class="mx-auto w-full max-w-[1120px] flex-1 px-4"><slot /></main>
+
+  <footer class="mt-10 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white/90">
+    <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
+    <div class="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 py-6 text-[13px]">
+      <span>{tr(lang, "about")}</span>
+      <a href="https://www.instagram.com/namakkal.360/" target="_blank" rel="noopener" class="font-bold text-white">Instagram @namakkal.360</a>
+    </div>
+  </footer>
+
+  <script>
+    const $ = (s: string) => document.querySelector(s) as HTMLElement;
+    $("#searchBtn").onclick = () => { $("#searchBar").classList.toggle("hidden"); ($("#searchBar input[name=q]") as HTMLInputElement).focus(); };
+    $("#themeBtn").onclick = () => {
+      const r = document.documentElement, t = r.dataset.theme === "dark" ? "light" : "dark";
+      r.dataset.theme = t; try { localStorage.setItem("n360t", t); } catch (e) {}
+    };
+    $("#langLink").addEventListener("click", () => { document.cookie = `lang=${$("#langLink").dataset.lang}; path=/; max-age=31536000; samesite=lax`; });
+  </script>
+</body>
+</html>

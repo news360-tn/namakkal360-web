@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Namakkal 360 - Design System</title>
+<link rel="icon" href="assets/logo-96.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+/* page-only layout for the design-system document (components themselves come from styles.css) */
+.ds{display:grid;grid-template-columns:220px 1fr;gap:28px;max-width:1240px;margin:0 auto;padding:24px 16px 80px}
+@media (max-width:900px){.ds{grid-template-columns:1fr}.toc{display:none}}
+.toc{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;gap:2px}
+.toc a{padding:7px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--muted)}
+.toc a:hover{background:var(--glass);color:var(--text)}
+.sec{background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:22px}
+.sec>h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.sec>p.d{color:var(--muted);font-size:14px;margin-bottom:16px}
+.lbl{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.sw div{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.sw i{display:block;height:64px;background:var(--c)}
+.sw b{display:block;font-size:13px;padding:8px 10px 0}
+.sw code{display:block;font-size:11.5px;color:var(--muted);padding:0 10px 9px}
+.type-row{display:flex;align-items:baseline;gap:16px;padding:10px 0;border-top:1px dashed var(--line)}
+.type-row small{width:110px;flex:none;color:var(--muted);font-size:12px;font-weight:700}
+.demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.box{border:1px dashed var(--line);border-radius:16px;padding:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:700px){.two{grid-template-columns:1fr}}
+.rad{display:flex;gap:12px;flex-wrap:wrap}
+.rad div{width:76px;height:56px;background:var(--grad);opacity:.8;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800}
+.mini-sheet{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--surface);max-width:460px}
+.mini-sheet .ph{aspect-ratio:16/9}
+.rule{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rule div{border-radius:14px;padding:12px 14px;font-size:14px}
+.do{background:color-mix(in srgb,#16A34A 14%,transparent)}.dont{background:color-mix(in srgb,#EF4444 14%,transparent)}
+.do b,.dont b{display:block;font-size:12px;letter-spacing:.05em;margin-bottom:4px}
+.do b{color:#16A34A}.dont b{color:#EF4444}
+.card{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i>
+  <svg><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#grain)"/></svg></div>
+
+<header>
+  <div class="wrap" style="max-width:1240px">
+    <a class="brand" href="index.html"><img src="assets/logo-96.png" alt=""><b>நாமக்கல் <i>360</i> <span style="font-weight:600;color:var(--muted);font-size:14px">· Design System</span></b></a>
+    <a class="chip" href="index.html" style="display:inline-flex;align-items:center">← Website</a>
+    <button class="ib" id="theme" aria-label="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </div>
+</header>
+
+<div class="ds">
+  <nav class="toc">
+    <a href="#principles">Principles</a><a href="#colour">Colour</a><a href="#type">Typography</a><a href="#shape">Shape & space</a><a href="#smoke">Smoke background</a>
+    <a href="#nav">Header & switches</a><a href="#chips">Chips & filters</a><a href="#banner">Area banner</a><a href="#alert">Power-cut alert</a>
+    <a href="#cards">News cards</a><a href="#story">Story view</a><a href="#states">States & feedback</a><a href="#motion">Motion</a><a href="#a11y">Accessibility</a>
+  </nav>
+
+  <main>
+    <section class="sec" id="principles"><h2>Principles</h2><p class="d">What every screen of Namakkal 360 follows.</p>
+      <div class="rule">
+        <div class="do"><b>DO</b>Simple first: one clear thing per row - area, then type & date, then news.</div>
+        <div class="dont"><b>DON'T</b>Crowd the page with tickers, side panels and counters.</div>
+        <div class="do"><b>DO</b>Bright, colourful brand: logo colours in smoke, colour-coded news types.</div>
+        <div class="dont"><b>DON'T</b>Use colour as decoration only - every colour means a news type or an alert.</div>
+        <div class="do"><b>DO</b>Story pictures come from each news story; place photos only in the area banner.</div>
+        <div class="dont"><b>DON'T</b>Show a place photo as if it were the news picture.</div>
+        <div class="do"><b>DO</b>Tamil first, English one tap away (த / EN) - same layout in both.</div>
+        <div class="dont"><b>DON'T</b>Mix languages in one label.</div>
+        <div class="do"><b>DO</b>Use only a plain hyphen "-" everywhere (also in news text from the pipeline: long dashes are changed to "-" before showing).</div>
+        <div class="dont"><b>DON'T</b>Use long dashes anywhere on the site.</div>
+      </div>
+    </section>
+
+    <section class="sec" id="colour"><h2>Colour</h2><p class="d">Brand colours come from the logo; news-type colours make each kind of news easy to spot.</p>
+      <div class="lbl">Brand</div>
+      <div class="sw">
+        <div><i style="--c:#0B5D3B"></i><b>Brand green</b><code>#0B5D3B</code></div>
+        <div><i style="--c:#16A34A"></i><b>Fresh green</b><code>#16A34A</code></div>
+        <div><i style="--c:#FACC15"></i><b>Sun yellow</b><code>#FACC15</code></div>
+        <div><i style="--c:#F97316"></i><b>360 orange</b><code>#F97316</code></div>
+        <div><i style="--c:#EF4444"></i><b>360 red</b><code>#EF4444</code></div>
+        <div><i style="--c:#0EA5E9"></i><b>Sky blue</b><code>#0EA5E9</code></div>
+        <div><i style="--c:var(--grad)"></i><b>Brand gradient</b><code>--grad</code></div>
+      </div>
+      <div class="lbl">News types</div>
+      <div class="sw">
+        <div><i style="--c:var(--t-power)"></i><b>மின்தடை · Power cut</b><code>--t-power</code></div>
+        <div><i style="--c:var(--t-collector)"></i><b>அரசு · Govt notice</b><code>--t-collector</code></div>
+        <div><i style="--c:var(--t-accident)"></i><b>விபத்து · Accident</b><code>--t-accident</code></div>
+        <div><i style="--c:var(--t-crime)"></i><b>குற்றம் · Crime</b><code>--t-crime</code></div>
+        <div><i style="--c:var(--t-rain)"></i><b>மழை · Rain</b><code>--t-rain</code></div>
+        <div><i style="--c:var(--t-civic)"></i><b>மக்கள் பிரச்னை · Civic</b><code>--t-civic</code></div>
+        <div><i style="--c:var(--t-edu)"></i><b>கல்வி · Education</b><code>--t-edu</code></div>
+        <div><i style="--c:var(--t-event)"></i><b>நிகழ்ச்சி · Events</b><code>--t-event</code></div>
+      </div>
+      <div class="lbl">Surfaces (switch 🌙 to see dark)</div>
+      <div class="sw">
+        <div><i style="--c:var(--bg)"></i><b>Page</b><code>--bg</code></div>
+        <div><i style="--c:var(--surface)"></i><b>Surface</b><code>--surface</code></div>
+        <div><i style="--c:var(--glass)"></i><b>Glass</b><code>--glass</code></div>
+        <div><i style="--c:var(--soft)"></i><b>Soft</b><code>--soft</code></div>
+        <div><i style="--c:var(--text)"></i><b>Text</b><code>--text</code></div>
+        <div><i style="--c:var(--muted)"></i><b>Muted text</b><code>--muted</code></div>
+      </div>
+    </section>
+
+    <section class="sec" id="type"><h2>Typography</h2><p class="d">Anek Tamil for Tamil, Plus Jakarta Sans for English - one family feel, built for Tamil letters.</p>
+      <div class="type-row"><small>Banner · 36/800</small><span style="font-size:36px;font-weight:800;line-height:1.1">நாமக்கல் மாவட்டம்</span></div>
+      <div class="type-row"><small>Story title · 24/800</small><span style="font-size:24px;font-weight:800">மரவள்ளி விவசாயிகள் பிரச்னை: 30-ல் கூட்டம்</span></div>
+      <div class="type-row"><small>Section · 20/800</small><span class="head"><h2 style="font-size:20px">சமீபத்திய செய்திகள்</h2></span></div>
+      <div class="type-row"><small>Card title · 16.5/700</small><span style="font-size:16.5px;font-weight:700">Worker killed after private bus hits him near Velagoundampatti</span></div>
+      <div class="type-row"><small>Body · 17/400</small><span style="font-size:17px;line-height:1.8">நாமக்கல் மாவட்டத்தில் 90,703 குழந்தைகளுக்கு வைட்டமின் ஏ திரவம் வழங்கப்பட உள்ளது.</span></div>
+      <div class="type-row"><small>Meta · 12.5/600</small><span style="font-size:12.5px;font-weight:600;color:var(--muted)">இன்று · 06:25 · வேலகவுண்டம்பட்டி</span></div>
+    </section>
+
+    <section class="sec" id="shape"><h2>Shape & space</h2><p class="d">Rounded, soft shapes; 8-point spacing.</p>
+      <div class="lbl">Radius</div>
+      <div class="rad"><div style="border-radius:7px">7 · tag</div><div style="border-radius:12px">12 · button</div><div style="border-radius:18px">18 · card</div><div style="border-radius:22px">22 · panel</div><div style="border-radius:999px">pill · chip</div></div>
+      <div class="lbl">Spacing scale</div>
+      <div class="demo">8 · 12 · 16 · 20 · 24 · 32 · 40 px &nbsp;-&nbsp; page side gutter 16 px; card gap 16 px (12 px on phone)</div>
+    </section>
+
+    <section class="sec" id="smoke"><h2>Smoke background</h2><p class="d">Slow-drifting smoke in logo colours (green, yellow, sky, orange, pink) + fine grain. Never behind text directly - text sits on glass.</p>
+      <div class="box" style="position:relative;height:160px;overflow:hidden;border-style:solid">
+        <div style="position:absolute;inset:0;background:radial-gradient(40% 60% at 15% 30%,#22C55E99,transparent),radial-gradient(35% 55% at 80% 40%,#FACC1599,transparent),radial-gradient(30% 50% at 55% 90%,#38BDF899,transparent),radial-gradient(25% 40% at 90% 90%,#F9731688,transparent);filter:blur(24px)"></div>
+        <div class="card" style="position:absolute;left:24px;top:30px;right:24px;padding:16px;--c:var(--t-collector)"><b>Glass card on smoke</b><br><span style="color:var(--muted);font-size:14px">background: var(--glass) + backdrop blur 14px</span></div>
+      </div>
+    </section>
+
+    <section class="sec" id="nav"><h2>Header & switches</h2><p class="d">Sticky glass header with the brand gradient line; search opens on tap.</p>
+      <div class="demo">
+        <div class="brand" style="margin:0"><img src="assets/logo-96.png" alt=""><b>நாமக்கல் <i>360</i></b></div>
+        <button class="ib" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+        <div class="lang"><button aria-pressed="true">த</button><button aria-pressed="false">EN</button></div>
+        <button class="ib" aria-label="Dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+        <button class="totop on" style="position:static" aria-label="Back to top"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </div>
+      <div class="lbl">Search field</div>
+      <div class="searchbar on" style="display:block;padding:0"><input type="search" placeholder="செய்தி அல்லது ஊர் தேடுங்கள்"></div>
+    </section>
+
+    <section class="sec" id="chips"><h2>Chips & filters</h2><p class="d">Area first, then towns, then type + date in one compact row. Selected = gradient fill.</p>
+      <div class="lbl">Area (taluk)</div>
+      <div class="chips"><button class="chip" aria-pressed="true">அனைத்தும்</button><button class="chip" aria-pressed="false">⭐ இராசிபுரம்</button><button class="chip" aria-pressed="false">நாமக்கல்</button><button class="chip" aria-pressed="false">திருச்செங்கோடு</button></div>
+      <div class="lbl">Town (inside a taluk)</div>
+      <div class="chips sub"><button class="chip" aria-pressed="true">முழு இராசிபுரம்</button><button class="chip" aria-pressed="false">வெண்ணந்தூர்</button><button class="chip" aria-pressed="false">நாமகிரிப்பேட்டை</button></div>
+      <div class="lbl">News type (each in its colour) + date</div>
+      <div class="bar" style="margin:0">
+        <div class="chips">
+          <button class="chip tchip" aria-pressed="false" style="--c:var(--t-power)"><i class="dot"></i>மின்தடை</button>
+          <button class="chip tchip" aria-pressed="true" style="--c:var(--t-accident)"><i class="dot"></i>விபத்து</button>
+          <button class="chip tchip" aria-pressed="false" style="--c:var(--t-rain)"><i class="dot"></i>மழை</button>
+          <button class="chip tchip" aria-pressed="false" style="--c:var(--t-crime)"><i class="dot"></i>குற்றம்</button>
+        </div>
+        <select class="date"><option>எல்லா நாளும்</option><option>இன்று</option><option>நேற்று</option><option>இந்த வாரம்</option><option>தேதி தேர்வு…</option></select>
+      </div>
+    </section>
+
+    <section class="sec" id="banner"><h2>Area banner</h2><p class="d">The only place where place photos are used. Changes with the chosen taluk; credit shown bottom-right; “☆ my area” on the right.</p>
+      <figure class="banner" style="margin:0"><img src="assets/places/banner-kolli-mist.webp" alt="" style="object-position:30% 40%"><div><h1>கொல்லிமலை</h1><p>செம்மேடு · வளப்பூர் நாடு</p></div>
+        <small>📷 நாமக்கல் மாவட்ட நிர்வாகம்</small><button class="star" aria-pressed="true">⭐ என் பகுதி</button></figure>
+    </section>
+
+    <section class="sec" id="alert"><h2>Power-cut alert</h2><p class="d">Always pinned above the news for today/tomorrow. The bar shows the cut hours on a 6 AM - 10 PM line.</p>
+      <div class="alert"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><div style="flex:1">
+        <small>மின்தடை அறிவிப்பு · காளப்பநாயக்கன்பட்டி · இன்று · 02:14</small><h3>காலை 9 முதல் மதியம் 2 வரை மின் தடை</h3><div class="tb"><span style="left:18.8%;right:50%"></span></div></div></div>
+    </section>
+
+    <section class="sec" id="cards"><h2>News cards</h2><p class="d">Top colour line + label = news type. Picture = the story's own image (placeholder shown when none). On phones the card turns into a row.</p>
+      <div class="grid">
+        <article class="card show" style="--c:var(--t-accident)"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17h14l-1.5-6h-11zM7 17v2M17 17v2M8 11l1.5-4h5L16 11"/></svg></div>
+          <div class="in"><div class="meta"><span class="tag">விபத்து</span><span>· வேலகவுண்டம்பட்டி</span></div><h3>தனியார் பேருந்து மோதி தொழிலாளி உயிரிழப்பு</h3><time>இன்று · 06:25</time></div></article>
+        <article class="card show" style="--c:var(--t-collector)"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
+          <div class="in"><div class="meta"><span class="tag">அரசு அறிவிப்பு</span><span>· நாமக்கல்</span></div><h3>மரவள்ளி விவசாயிகள் பிரச்னை: 30-ல் முத்தரப்பு கூட்டம்</h3><time>இன்று · 10:14</time></div></article>
+        <article class="card show" style="--c:var(--t-rain)"><div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.5 1.5A3.5 3.5 0 0 1 17 15M9 18l-1 2M13 18l-1 2M17 18l-1 2"/></svg></div>
+          <div class="in"><div class="meta"><span class="tag">மழை</span><span>· ஓலப்பாளையம்</span></div><h3>30 ஏக்கர் பயிர் நீரில் மூழ்கி நாசம்</h3><time>இன்று · 06:25</time></div></article>
+      </div>
+    </section>
+
+    <section class="sec" id="story"><h2>Story view</h2><p class="d">Slides in from the right (full screen on phones): picture, title, full story, “முழு விவரம்” facts, share + reel buttons.</p>
+      <div class="mini-sheet" style="--c:var(--t-collector)"><div class="ph" style="background:linear-gradient(135deg,color-mix(in srgb,var(--c) 38%,transparent),color-mix(in srgb,var(--c) 10%,transparent));color:var(--c)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></div>
+        <div class="sheet" style="position:static;transform:none;width:auto;height:auto"><div class="in">
+          <div class="meta"><span class="tag" style="--c:var(--t-collector)">அரசு அறிவிப்பு</span><span>· நாமக்கல் · இன்று · 10:14</span></div><h2>மரவள்ளி விவசாயிகள் பிரச்னை: 30-ல் முத்தரப்பு கூட்டம்</h2>
+          <p class="story">வரும் 30ம் தேதி மாலை 4:30 மணிக்கு நாமக்கல் கலெக்டர் அலுவலகத்தில் இக்கூட்டம் நடைபெற உள்ளது.</p>
+          <dl class="facts"><div><dt>இடம்</dt><dd>நாமக்கல்</dd></div><div><dt>நாள்</dt><dd>அக்டோபர் 30, மாலை 4:30</dd></div><div><dt>யார்</dt><dd>ஆட்சியர் மதுபாலன்</dd></div></dl>
+          <div class="act"><a class="wa" href="#">WhatsApp-ல் பகிர்</a><a class="ig" href="#">▶ ரீல் பார்க்க</a></div></div></div></div>
+    </section>
+
+    <section class="sec" id="states"><h2>States & feedback</h2><p class="d">Every tap answers: press shrink (scale .97), selected gradient, hover lift with the type colour glow.</p>
+      <div class="two">
+        <div class="box"><div class="lbl" style="margin-top:0">Empty</div><p class="empty" style="padding:18px 0">இந்தத் தேர்வில் செய்தி இல்லை.</p></div>
+        <div class="box"><div class="lbl" style="margin-top:0">Chip states</div><div class="demo"><button class="chip" aria-pressed="false">Normal</button><button class="chip" aria-pressed="true">Selected</button><button class="chip tchip" aria-pressed="true" style="--c:var(--t-power)"><i class="dot"></i>Type selected</button></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="motion"><h2>Motion</h2><p class="d">Calm and purposeful. All motion is switched off when the phone asks for reduced motion.</p>
+      <ul style="padding-left:18px;line-height:2;font-size:14.5px">
+        <li>Cards fade up (16 px, 0.45 s) as they scroll into view; 6 more load automatically at the bottom.</li>
+        <li>Smoke drifts over 38-60 s loops; banner photo stays still for reading.</li>
+        <li>Story view slides in (0.28 s); back-to-top appears after 600 px of scrolling.</li>
+        <li>Taps: press scale 0.97; hover lift 2 px.</li>
+      </ul>
+    </section>
+
+    <section class="sec" id="a11y"><h2>Accessibility & reading</h2><p class="d">For every reader in Namakkal - older phones, bright sunlight, Tamil first.</p>
+      <ul style="padding-left:18px;line-height:2;font-size:14.5px">
+        <li>Body text 17 px with 1.8 line height for Tamil; tap targets at least 38 px.</li>
+        <li>Colour is never the only signal: every type colour also has a written label.</li>
+        <li>Works with keyboard (Enter opens a story, Esc closes); dark mode follows the phone setting.</li>
+        <li>Place photos always show the photographer / source credit.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+<script>
+document.getElementById("theme").onclick=()=>{const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=d?"light":"dark"};
+const th=new URLSearchParams(location.search).get("theme"); if(th) document.documentElement.dataset.theme=th;
+</script>
+</body>
+</html>

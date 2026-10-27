@@ -1,0 +1,141 @@
+---
+/* Home: area banner -> area / town chips -> type chips + date -> pinned power cuts -> news (more load while scrolling).
+   Every filter is a plain link, so any view can be shared and works without JavaScript. */
+import { env } from "cloudflare:workers";
+import Base from "../layouts/Base.astro";
+import { langOf, tr } from "../lib/i18n";
+import { TALUKS, DISTRICT, talukOf, placeOf } from "../lib/geo";
+import { TYPES, typeOf } from "../lib/types";
+import { sanitize, list, powerAlerts, PAGE, type Filter } from "../lib/news";
+import { cardHtml, alertHtml } from "../lib/card";
+
+const url = Astro.url, sp = url.searchParams;
+const lang = langOf(sp.get("lang") ?? Astro.cookies.get("lang")?.value);
+const f = sanitize(Object.fromEntries(sp));
+const db = (env as any).DB as D1Database;
+const [{ items, total }, alerts] = await Promise.all([list(db, { ...f, page: 0 }), f.type && f.type !== "power" ? Promise.resolve([]) : powerAlerts(db, f)]);
+const rest = items.filter((n) => !alerts.some((a) => a.id === n.id));
+
+const tk = f.taluk ? talukOf(f.taluk) : undefined;
+const banner = tk ? { img: tk.banner, credit: tk.credit } : { img: DISTRICT.banner, credit: DISTRICT.credit };
+const heading = [f.place && tk ? placeOf(tk.id, f.place)?.[lang] : tk?.[lang], f.type ? typeOf(f.type)[lang] : ""].filter(Boolean).join(" · ") || tr(lang, "latest");
+
+/** link that keeps the other filters (and the language) */
+function link(change: Partial<Record<keyof Filter, string | undefined>>) {
+  const p = new URLSearchParams();
+  const next: Record<string, string | undefined> = { taluk: f.taluk, place: f.place, type: f.type, date: f.date, q: f.q, ...change };
+  for (const [k, v] of Object.entries(next)) if (v) p.set(k, v);
+  if (lang === "en") p.set("lang", "en");
+  const s = p.toString();
+  return s ? `/?${s}` : "/";
+}
+const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[14.5px] font-semibold backdrop-blur-md transition active:scale-95";
+const off = "border-black/10 bg-white/70 hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60";
+const on = "border-transparent bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40";
+const row = "flex gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
+const apiQuery = new URLSearchParams(Object.entries({ ...f, page: undefined, lang }).filter(([, v]) => v != null && v !== "") as [string, string][]).toString();
+---
+<Base lang={lang}>
+  <!-- area banner: the only place where place photos are used -->
+  <figure class="relative my-4 h-[180px] overflow-hidden rounded-[18px] shadow-[0_20px_50px_-20px_rgba(11,93,59,.45)] max-sm:h-[140px]">
+    <img src={banner.img} alt="" class="size-full object-cover object-[30%_40%]" />
+    <div class="absolute inset-0 bg-linear-to-r from-slate-950/75 via-brand/20 to-orange360/25"></div>
+    <figcaption class="absolute bottom-4 left-5 text-white">
+      <h1 class="bg-linear-to-r from-white to-amber-200 bg-clip-text text-[clamp(26px,4vw,36px)] leading-tight font-extrabold text-transparent">{tk ? tk[lang] : tr(lang, "district")}</h1>
+      <p class="text-sm font-semibold opacity-90">{tk ? tk.places.map((p) => p[lang]).join(" · ") : tr(lang, "distSub")}</p>
+    </figcaption>
+    <small class="absolute right-2.5 bottom-2 text-[10px] text-white/70">📷 {banner.credit}</small>
+    {tk && <button id="star" type="button" data-taluk={tk.id} data-on={tr(lang, "mine")} data-off={tr(lang, "setMine")}
+      class="absolute top-3 right-3 flex h-[34px] items-center rounded-full bg-white/90 px-3 text-[13px] font-bold text-ink transition active:scale-95 aria-pressed:bg-sun">☆ {tr(lang, "setMine")}</button>}
+  </figure>
+
+  <nav class={row} aria-label="Area">
+    <a href={link({ taluk: undefined, place: undefined })} class:list={[chip, !f.taluk ? on : off]}>{tr(lang, "all")}</a>
+    {TALUKS.map((t) => <a href={link({ taluk: t.id, place: undefined })} data-taluk={t.id} class:list={[chip, f.taluk === t.id ? on : off]}>{t[lang]}</a>)}
+  </nav>
+  {tk && (
+    <nav class:list={[row, "mt-2"]} aria-label="Town">
+      <a href={link({ place: undefined })} class:list={[chip, "h-8 text-[13.5px]", !f.place ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{tr(lang, "allOf")} {tk[lang]}</a>
+      {tk.places.map((p) => <a href={link({ place: p.id })} class:list={[chip, "h-8 text-[13.5px]", f.place === p.id ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{p[lang]}</a>)}
+    </nav>
+  )}
+
+  <div class="mt-3.5 mb-1.5 flex items-center gap-2.5">
+    <nav class:list={[row, "min-w-0 flex-1"]} aria-label="Type">
+      <a href={link({ type: undefined })} class:list={[chip, "h-[34px] text-[13.5px]", !f.type ? on : off]}>{tr(lang, "all")}</a>
+      {TYPES.map((t) => (
+        <a href={link({ type: t.id })} class:list={[chip, "h-[34px] text-[13.5px]", f.type === t.id ? [t.bg, "border-transparent text-white shadow-lg", t.ring] : off]}>
+          <i class:list={["size-2 rounded-full", f.type === t.id ? "bg-white" : t.bg]}></i>{t[lang]}
+        </a>
+      ))}
+    </nav>
+    <form action="/" method="get" class="shrink-0">
+      {Object.entries({ taluk: f.taluk, place: f.place, type: f.type, q: f.q, lang: lang === "en" ? "en" : undefined }).filter(([, v]) => v).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+      <select name="date" aria-label={tr(lang, "pick")} onchange="this.form.submit()"
+        class="h-[34px] rounded-full border border-black/10 bg-white/70 px-3 text-[13.5px] font-semibold backdrop-blur-md outline-none dark:border-white/10 dark:bg-slate-900/60">
+        {dateOpts.map(([v, l]) => <option value={v} selected={(f.date ?? "") === v}>{l}</option>)}
+        {f.date && /^\d/.test(f.date) && <option value={f.date} selected>{f.date}</option>}
+      </select>
+    </form>
+  </div>
+
+  <div class="my-4 flex items-baseline justify-between">
+    <div>
+      <h2 class="inline-block bg-linear-to-r from-brand-fresh via-sun to-red360 bg-clip-text text-xl font-extrabold text-transparent">{heading}</h2>
+      <span class="block text-[13px] font-semibold text-slate-500 dark:text-slate-400">{total} {tr(lang, "stories")}</span>
+    </div>
+    {(f.taluk || f.type || f.date || f.q) && <a href={lang === "en" ? "/?lang=en" : "/"} class="text-[13px] font-bold text-red360">{tr(lang, "showAll")}</a>}
+  </div>
+
+  <Fragment set:html={alerts.map((n) => alertHtml(n, lang)).join("")} />
+
+  <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-3" data-api={apiQuery} data-page="0" data-more={String(total > PAGE)}>
+    <Fragment set:html={rest.map((n) => cardHtml(n, lang)).join("")} />
+  </section>
+  {!items.length && !alerts.length && <p class="py-10 text-center text-slate-500">{tr(lang, "empty")}</p>}
+  <div id="more" class="h-px"></div>
+
+  <button id="toTop" type="button" aria-label="Back to top"
+    class="pointer-events-none fixed right-4 bottom-5 z-40 grid size-[46px] translate-y-2.5 place-items-center rounded-full bg-linear-to-br from-brand-fresh to-sky360 text-white opacity-0 shadow-lg transition data-[on]:pointer-events-auto data-[on]:translate-y-0 data-[on]:opacity-100">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+  </button>
+</Base>
+
+<script>
+  // more news while scrolling, back-to-top, "my area" (kept only in this browser)
+  const grid = document.getElementById("grid")!, more = document.getElementById("more")!, top = document.getElementById("toTop")!;
+  let busy = false;
+  new IntersectionObserver(async ([e]) => {
+    if (!e.isIntersecting || busy || grid.dataset.more !== "true") return;
+    busy = true;
+    const page = +(grid.dataset.page || 0) + 1;
+    try {
+      const r = await fetch(`/api/news?${grid.dataset.api}&page=${page}&format=html`);
+      const j = await r.json();
+      grid.insertAdjacentHTML("beforeend", j.html);
+      grid.dataset.page = String(page); grid.dataset.more = String(j.more);
+    } finally { busy = false; }
+  }, { rootMargin: "400px" }).observe(more);
+
+  addEventListener("scroll", () => top.toggleAttribute("data-on", scrollY > 600), { passive: true });
+  top.onclick = () => scrollTo({ top: 0 });
+
+  const star = document.getElementById("star");
+  const mine = (() => { try { return localStorage.getItem("n360area") || ""; } catch { return ""; } })();
+  if (mine) document.querySelector(`nav [data-taluk="${mine}"]`)?.prepend("⭐ ");
+  if (star) {
+    const paint = (on: boolean) => { star.setAttribute("aria-pressed", String(on)); star.textContent = (on ? "⭐ " : "☆ ") + (on ? star.dataset.on : star.dataset.off); };
+    paint(mine === star.dataset.taluk);
+    star.onclick = () => {
+      const on = star.getAttribute("aria-pressed") !== "true";
+      try { on ? localStorage.setItem("n360area", star.dataset.taluk!) : localStorage.removeItem("n360area"); } catch {}
+      paint(on);
+    };
+  }
+  // returning reader: open on their own area (only on the plain home page)
+  if (mine && location.search.replace(/[?&]lang=\w+/, "") === "" && !sessionStorage.getItem("n360seen")) {
+    sessionStorage.setItem("n360seen", "1");
+    location.replace(`/?taluk=${mine}${location.search.includes("lang=en") ? "&lang=en" : ""}`);
+  }
+</script>

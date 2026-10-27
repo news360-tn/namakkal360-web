@@ -1,0 +1,41 @@
+/* Tailwind CSS only: this file holds the Tailwind setup and the design tokens (no hand-written style rules).
+   All styling is done with Tailwind utility classes in the components. */
+@import "tailwindcss";
+
+/* dark mode follows the toggle (data-theme on <html>), set from the phone setting on first visit */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  --font-sans: "Anek Tamil", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* brand (from the logo) */
+  --color-brand: #0b5d3b;
+  --color-brand-fresh: #16a34a;
+  --color-sun: #facc15;
+  --color-orange360: #f97316;
+  --color-red360: #ef4444;
+  --color-sky360: #0ea5e9;
+  --color-ink: #0b1220;
+
+  /* news types */
+  --color-t-power: #f97316;
+  --color-t-collector: #16a34a;
+  --color-t-accident: #ef4444;
+  --color-t-crime: #8b5cf6;
+  --color-t-rain: #0ea5e9;
+  --color-t-civic: #14b8a6;
+  --color-t-edu: #3b82f6;
+  --color-t-event: #ec4899;
+  --color-t-business: #ca8a04;
+
+  /* slow smoke drift */
+  --animate-drift-1: drift-1 38s ease-in-out infinite alternate;
+  --animate-drift-2: drift-2 46s ease-in-out infinite alternate;
+  --animate-drift-3: drift-3 52s ease-in-out infinite alternate;
+  --animate-rise: rise .45s ease both;
+
+  @keyframes drift-1 { to { transform: translate(8vmax, 6vmax) rotate(25deg) scale(1.15); } }
+  @keyframes drift-2 { to { transform: translate(-10vmax, 8vmax) rotate(-30deg) scale(1.1); } }
+  @keyframes drift-3 { to { transform: translate(6vmax, -10vmax) rotate(20deg) scale(1.2); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+}

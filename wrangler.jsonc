@@ -1,0 +1,13 @@
+{
+  // Cloudflare Worker that serves the website, the news API and the D1 news database
+  "name": "namakkal360",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+  "d1_databases": [
+    // database_id is filled in after `wrangler d1 create namakkal360` (owner's Cloudflare account)
+    { "binding": "DB", "database_name": "namakkal360", "database_id": "local-only" }
+  ],
+  "observability": { "enabled": true }
+}
