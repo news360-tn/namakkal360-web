@@ -36,10 +36,11 @@ function link(change: Partial<Record<keyof Filter | "pg", string | undefined>>) 
   const s = p.toString();
   return s ? `/?${s}` : "/";
 }
-const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[14.5px] font-semibold backdrop-blur-md transition active:scale-95";
+const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[14.5px] font-semibold backdrop-blur-md transition active:scale-95 max-sm:h-9 max-sm:px-3 max-sm:text-[13.5px]";
 const off = "border-black/10 bg-white/70 hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60";
 const on = "border-transparent bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40";
-const row = "flex gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+const row = "flex flex-wrap gap-2 py-0.5";      // every taluk and type always visible (wraps to the next line, no hidden sideways scroll)
+const sel = "h-11 w-full rounded-xl border border-black/10 bg-white/80 px-3 text-[14.5px] font-semibold text-slate-900 backdrop-blur-md outline-none focus:border-brand-fresh dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100";
 const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
 /** page numbers: 1 … 4 5 6 … 20 */
 const nums: (number | "…")[] = [];
@@ -67,22 +68,49 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
       class="absolute top-3 right-3 flex h-[34px] items-center rounded-full bg-white/90 px-3 text-[13px] font-bold text-ink transition active:scale-95 aria-pressed:bg-sun">☆ {tr(lang, "setMine")}</button>}
   </figure>
 
-  <nav class={row} aria-label="Area">
+  <nav class:list={[row, "max-sm:hidden"]} aria-label="Area">
     <a href={link({ taluk: undefined, place: undefined })} class:list={[chip, !f.taluk ? on : off]}>{tr(lang, "all")}</a>
     {TALUKS.map((t) => <a href={link({ taluk: t.id, place: undefined })} data-taluk={t.id} class:list={[chip, f.taluk === t.id ? on : off]}>{t[lang]}</a>)}
   </nav>
   {tk && (
-    <nav class:list={[row, "mt-2"]} aria-label="Town">
+    <nav class:list={[row, "mt-2 max-sm:hidden"]} aria-label="Town">
       <a href={link({ place: undefined })} class:list={[chip, "h-8 text-[13.5px]", !f.place ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{tr(lang, "allOf")} {tk[lang]}</a>
       {tk.places.map((p) => <a href={link({ place: p.id })} class:list={[chip, "h-8 text-[13.5px]", f.place === p.id ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{p[lang]}</a>)}
     </nav>
   )}
 
-  <div class="mt-3.5 mb-1.5 flex items-center gap-2.5">
+  <!-- phones: compact dropdowns instead of many rows of buttons -->
+  <form action="/" method="get" class="grid grid-cols-2 gap-2 sm:hidden">
+    {lang === "en" && <input type="hidden" name="lang" value="en" />}
+    {f.q && <input type="hidden" name="q" value={f.q} />}
+    <label class:list={["flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400", !tk && "col-span-2"]}>{tr(lang, "area")}
+      <select name="taluk" onchange="this.form.place && (this.form.place.value=''); this.form.submit()" class={sel}>
+        <option value="">{tr(lang, "all")}</option>
+        {TALUKS.map((t) => <option value={t.id} selected={f.taluk === t.id}>{t[lang]}</option>)}
+      </select></label>
+    {tk ? (
+      <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "town")}
+        <select name="place" onchange="this.form.submit()" class={sel}>
+          <option value="">{tr(lang, "allOf")} {tk[lang]}</option>
+          {tk.places.map((p) => <option value={p.id} selected={f.place === p.id}>{p[lang]}</option>)}
+        </select></label>
+    ) : null}
+    <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "kind")}
+      <select name="type" onchange="this.form.submit()" class={sel}>
+        <option value="">{tr(lang, "all")}</option>
+        {TYPES.map((t) => <option value={t.id} selected={f.type === t.id}>{t[lang]}</option>)}
+      </select></label>
+    <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "day")}
+      <select name="date" onchange="this.form.submit()" class={sel}>
+        {dateOpts.map(([v, l]) => <option value={v} selected={(f.date ?? "") === v}>{l}</option>)}
+      </select></label>
+  </form>
+
+  <div class="mt-3.5 mb-1.5 flex flex-col gap-2.5 max-sm:hidden sm:flex-row sm:items-start">
     <nav class:list={[row, "min-w-0 flex-1"]} aria-label="Type">
-      <a href={link({ type: undefined })} class:list={[chip, "h-[34px] text-[13.5px]", !f.type ? on : off]}>{tr(lang, "all")}</a>
+      <a href={link({ type: undefined })} class:list={[chip, "h-[34px] text-[13.5px] max-sm:h-8", !f.type ? on : off]}>{tr(lang, "all")}</a>
       {TYPES.map((t) => (
-        <a href={link({ type: t.id })} class:list={[chip, "h-[34px] text-[13.5px]", f.type === t.id ? [t.bg, "border-transparent text-white shadow-lg", t.ring] : off]}>
+        <a href={link({ type: t.id })} class:list={[chip, "h-[34px] text-[13.5px] max-sm:h-8", f.type === t.id ? [t.bg, "border-transparent text-white shadow-lg", t.ring] : off]}>
           <i class:list={["size-2 rounded-full", f.type === t.id ? "bg-white" : t.bg]}></i>{t[lang]}
         </a>
       ))}
