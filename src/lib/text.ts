@@ -22,3 +22,16 @@ export function factsFromCaption(caption: string): { label: string; value: strin
   }
   return out.slice(0, 8);
 }
+
+/** story text -> lead sentence + short paragraphs (2 sentences each) for easy reading on phones */
+export function paragraphs(body: string, per = 2): { lead: string; rest: string[] } {
+  const parts = clean(body).split(/(?<=[.!?।])\s+(?=\S)/u).map((s) => s.trim()).filter((s) => s && !isOutro(s));
+  const [lead = "", ...more] = parts;
+  const rest: string[] = [];
+  for (let i = 0; i < more.length; i += per) rest.push(more.slice(i, i + per).join(" "));
+  return { lead, rest };
+}
+
+/** the reel's spoken follow line ("மேலும் செய்திகளுக்கு நாமக்கல் த்ரீ சிக்ஸ்டி பக்கத்தை பின்தொடருங்கள்") is not part of the news */
+export const isOutro = (s: string) => /பின்தொடர|த்ரீ\s*சிக்ஸ்டி|follow\s+(namakkal|rasipuram)|three\s*sixty/i.test(s);
+export const dropOutro = (body: string) => clean(body).split(/(?<=[.!?।])\s+(?=\S)/u).filter((x) => !isOutro(x)).join(" ");

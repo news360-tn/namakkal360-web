@@ -82,3 +82,23 @@ describe("a story from the pipeline", () => {
 });
 
 describe("dates", () => it("IST day", () => expect(istDay(0, Date.UTC(2026, 9, 26, 19, 0))).toBe("2026-10-27")));
+
+import { paragraphs } from "../src/lib/text";
+describe("story paragraphs", () => {
+  it("lead sentence + paragraphs of 2 sentences", () => {
+    const p = paragraphs("முதல் வரி. இரண்டாம் வரி. மூன்றாம் வரி. நான்காம் வரி. ஐந்தாம் வரி.");
+    expect(p.lead).toBe("முதல் வரி.");
+    expect(p.rest).toEqual(["இரண்டாம் வரி. மூன்றாம் வரி.", "நான்காம் வரி. ஐந்தாம் வரி."]);
+  });
+  it("does not split inside numbers like 4:30 or 1,47,000", () => {
+    expect(paragraphs("மாலை 4:30 மணிக்கு கூட்டம். ரூ.1,47,000 பறிமுதல்.").lead).toBe("மாலை 4:30 மணிக்கு கூட்டம்.");
+  });
+});
+
+import { dropOutro } from "../src/lib/text";
+describe("reel follow line is not shown on the website", () => {
+  it("drops the outro sentence", () => {
+    expect(dropOutro("முகாம் 30 வரை நடைபெறும். மேலும் செய்திகளுக்கு நாமக்கல் த்ரீ சிக்ஸ்டி பக்கத்தை பின்தொடருங்கள்.")).toBe("முகாம் 30 வரை நடைபெறும்.");
+    expect(paragraphs("ஒன்று. இரண்டு. Follow Namakkal Three Sixty for more local news.").rest).toEqual(["இரண்டு."]);
+  });
+});

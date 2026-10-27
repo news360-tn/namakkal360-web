@@ -7,6 +7,7 @@ import { get } from "../../lib/news";
 import { typeOf } from "../../lib/types";
 import { talukOf } from "../../lib/geo";
 import { icon, placeName, title, when } from "../../lib/card";
+import { paragraphs } from "../../lib/text";
 
 const lang = langOf(Astro.url.searchParams.get("lang") ?? Astro.cookies.get("lang")?.value);
 const n = await get((env as any).DB as D1Database, Astro.params.id ?? "");
@@ -16,6 +17,7 @@ const pn = placeName(n, lang), place = tk && pn !== tk[lang] ? `${pn}, ${tk[lang
 const body = (lang === "en" && n.body_en) || n.body_ta;
 const shareUrl = new URL(`/news/${n.id}`, Astro.url).href;
 const back = lang === "en" ? "/?lang=en" : "/";
+const para = paragraphs(body);
 const published = `${n.day}T${n.time || "00:00"}:00+05:30`;
 const article = {
   "@context": "https://schema.org", "@type": "NewsArticle", headline: title(n, lang).slice(0, 110), description: body.slice(0, 200),
@@ -31,20 +33,23 @@ const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", it
   { "@type": "ListItem", position: tk ? 3 : 2, name: title(n, lang).slice(0, 80) }] };
 ---
 <Base lang={lang} title={title(n, lang)} description={body.slice(0, 160)} image={n.images[0]} path={`/news/${n.id}`} type="article" noindex={lang === "en" && !n.body_en} jsonld={[article, crumbs]}>
-  <article class="mx-auto my-5 max-w-[720px] overflow-hidden rounded-[22px] border border-black/5 bg-white/80 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
+  <article class="-mx-4 mt-0 mb-5 overflow-hidden bg-white/85 backdrop-blur-md sm:mx-auto sm:my-5 sm:max-w-[720px] sm:rounded-[22px] sm:border sm:border-black/5 sm:shadow-sm dark:bg-slate-900/75 dark:sm:border-white/10">
     <div class="aspect-video overflow-hidden">
       {n.images[0]
         ? <img src={n.images[0]} alt={title(n, lang)} class="size-full object-cover" />
         : <span class:list={["grid size-full place-items-center", t.text, t.soft]} set:html={icon(n.type, "size-14")} />}
     </div>
-    <div class="p-5 sm:p-7">
+    <div class="px-4 pt-4 pb-6 sm:p-7">
       <a href={back} class="text-[13px] font-bold text-brand-fresh">← {tr(lang, "back")}</a>
       <p class="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-slate-500 dark:text-slate-400">
         <b class={t.text}>{t[lang]}</b> · {pn} · {when(n, lang)}
       </p>
-      <h1 class="mt-2 text-2xl leading-snug font-extrabold text-balance sm:text-[28px]">{title(n, lang)}</h1>
+      <h1 class="mt-2 text-[24px] leading-snug font-extrabold text-balance sm:text-[28px]">{title(n, lang)}</h1>
       {lang === "en" && !n.body_en && <p class="mt-2 text-sm font-semibold text-slate-500">{tr(lang, "tamilOnly")}</p>}
-      <p class="mt-4 text-[17px] leading-[1.8] whitespace-pre-line">{body}</p>
+      <div class="mt-4 space-y-4 text-[17.5px] leading-[1.85] sm:text-lg">
+        {para.lead && <p class="border-l-4 border-brand-fresh pl-3 text-[18.5px] leading-[1.7] font-bold sm:text-xl">{para.lead}</p>}
+        {para.rest.map((x) => <p>{x}</p>)}
+      </div>
 
       {n.images.length > 1 && (
         <div class="mt-5 grid grid-cols-2 gap-2">

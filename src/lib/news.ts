@@ -1,5 +1,5 @@
 /** Reading and writing stories in the D1 news store. */
-import { clean, factsFromCaption } from "./text";
+import { clean, dropOutro, factsFromCaption } from "./text";
 import { typeFromCategory, TYPES } from "./types";
 import { locate, TALUKS } from "./geo";
 import { powerHours } from "./power";
@@ -76,7 +76,7 @@ export interface Incoming {
   location?: string; category?: string; images?: string[]; reel_link?: string; source?: string; published?: string; filed_at?: string;
 }
 export function toRow(s: Incoming): News {
-  const title_ta = clean(s.headline_ta), body_ta = clean(s.reel_script);
+  const title_ta = clean(s.headline_ta), body_ta = dropOutro(s.reel_script ?? "");
   const { taluk, place } = locate(s.location ?? "", title_ta);
   const type = typeFromCategory(s.category ?? "", title_ta);
   const when = new Date(s.filed_at || s.published || Date.now());
@@ -85,7 +85,7 @@ export function toRow(s: Incoming): News {
   const reel = String(s.reel_link ?? "").match(/https:\/\/www\.instagram\.com\/reel\/[\w-]+\/?/)?.[0] ?? "";
   return {
     id: clean(s.story_id), day: ist.slice(0, 10), time: ist.slice(11, 16), taluk, place, type,
-    title_ta, title_en: clean(s.headline_en), body_ta, body_en: clean(s.story_en),
+    title_ta, title_en: clean(s.headline_en), body_ta, body_en: dropOutro(s.story_en ?? ""),
     facts: factsFromCaption(s.caption ?? ""), images: (s.images ?? []).filter((u) => /^https:\/\//.test(u)).slice(0, 6),
     reel_url: reel, source_url: /^https?:\/\//.test(s.source ?? "") ? s.source! : "",
     power_from: hours?.[0] ?? null, power_to: hours?.[1] ?? null,
