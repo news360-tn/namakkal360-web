@@ -33,7 +33,7 @@ export function cardHtml(n: News, lang: Lang): string {
   return `<a href="${href(n, lang)}" class="group flex animate-rise flex-col overflow-hidden rounded-[18px] border border-t-[3px] border-black/5 ${t.line} bg-white/75 shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[.97] max-sm:flex-row dark:border-white/10 dark:bg-slate-900/65">
     <span class="block aspect-video w-full overflow-hidden max-sm:aspect-auto max-sm:w-28 max-sm:shrink-0">${pic}</span>
     <span class="flex flex-1 flex-col gap-1.5 p-4 max-sm:p-3">
-      <span class="flex items-center gap-1.5 text-[12.5px] font-semibold text-slate-500 dark:text-slate-400"><b class="${t.text}">${esc(t[lang])}</b>· ${esc(placeName(n, lang))}</span>
+      <span class="flex min-w-0 items-center gap-1.5 text-[12.5px] font-semibold whitespace-nowrap text-slate-500 dark:text-slate-400"><b class="${t.text}">${esc(t[lang])}</b><span class="truncate">· ${esc(placeName(n, lang))}</span></span>
       <span class="text-[16.5px] font-bold leading-snug text-slate-900 max-sm:text-[15.5px] dark:text-slate-100">${esc(title(n, lang))}</span>
       <span class="mt-auto pt-1 text-[12.5px] font-semibold text-slate-500 dark:text-slate-400">${esc(when(n, lang))}</span>
     </span></a>`;
