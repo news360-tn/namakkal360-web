@@ -21,7 +21,17 @@ export const title = (n: News, lang: Lang) => (lang === "en" && n.title_en) || n
 export function when(n: News, lang: Lang, now = Date.now()) {
   const d = n.day === istDay(0, now) ? tr(lang, "today") : n.day === istDay(-1, now) ? tr(lang, "yesterday") :
     new Date(n.day + "T00:00:00").toLocaleDateString(lang === "ta" ? "ta-IN" : "en-IN", { day: "numeric", month: "short" });
-  return n.time ? `${d} · ${n.time}` : d;
+  return n.time ? `${d} · ${clock(n.time, lang)}` : d;
+}
+
+/** "18:05" -> "மாலை 6:05" / "6:05 PM" (readers asked for AM/PM, not 24-hour time) */
+export function clock(hhmm: string, lang: Lang): string {
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm || "");
+  if (!m) return hhmm || "";
+  const h = +m[1], mm = m[2], h12 = h % 12 || 12;
+  if (lang === "en") return `${h12}:${mm} ${h < 12 ? "AM" : "PM"}`;
+  const part = h < 5 ? "இரவு" : h < 12 ? "காலை" : h < 16 ? "மதியம்" : h < 19 ? "மாலை" : "இரவு";
+  return `${part} ${h12}:${mm}`;
 }
 export const href = (n: News, lang: Lang) => `/news/${encodeURIComponent(n.id)}${lang === "en" ? "?lang=en" : ""}`;
 

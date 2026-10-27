@@ -102,3 +102,10 @@ describe("reel follow line is not shown on the website", () => {
     expect(paragraphs("ஒன்று. இரண்டு. Follow Namakkal Three Sixty for more local news.").rest).toEqual(["இரண்டு."]);
   });
 });
+
+import { clock } from "../src/lib/card";
+describe("time with AM / PM", () => {
+  it.each([["06:25", "காலை 6:25", "6:25 AM"], ["10:14", "காலை 10:14", "10:14 AM"], ["12:00", "மதியம் 12:00", "12:00 PM"],
+    ["14:30", "மதியம் 2:30", "2:30 PM"], ["18:05", "மாலை 6:05", "6:05 PM"], ["22:23", "இரவு 10:23", "10:23 PM"], ["02:14", "இரவு 2:14", "2:14 AM"]])
+    ("%s", (t, ta, en) => { expect(clock(t, "ta")).toBe(ta); expect(clock(t, "en")).toBe(en); });
+});
