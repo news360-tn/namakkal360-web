@@ -36,10 +36,11 @@ function link(change: Partial<Record<keyof Filter | "pg", string | undefined>>) 
   const s = p.toString();
   return s ? `/?${s}` : "/";
 }
-const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[14.5px] font-semibold backdrop-blur-md transition active:scale-95 max-sm:h-9 max-sm:px-3 max-sm:text-[13.5px]";
+const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13.5px] font-semibold backdrop-blur-md transition active:scale-95 max-sm:h-9 max-sm:px-3 max-sm:text-[13.5px]";
 const off = "border-black/10 bg-white/70 hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60";
 const on = "border-transparent bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40";
-const row = "flex flex-wrap gap-2 py-0.5";      // every taluk and type always visible (wraps to the next line, no hidden sideways scroll)
+const row = "flex flex-wrap gap-1.5 py-0.5";      // every taluk and type always visible (wraps to the next line, no hidden sideways scroll)
+const pill = "h-10 min-w-44 rounded-full border border-black/10 bg-white/80 px-4 text-[14px] font-semibold text-slate-900 backdrop-blur-md outline-none focus:border-brand-fresh dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100";
 const sel = "h-11 w-full rounded-xl border border-black/10 bg-white/80 px-3 text-[14.5px] font-semibold text-slate-900 backdrop-blur-md outline-none focus:border-brand-fresh dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100";
 const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
 /** page numbers: 1 … 4 5 6 … 20 */
@@ -106,24 +107,20 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
       </select></label>
   </form>
 
-  <div class="mt-3.5 mb-1.5 flex flex-col gap-2.5 max-sm:hidden sm:flex-row sm:items-start">
-    <nav class:list={[row, "min-w-0 flex-1"]} aria-label="Type">
-      <a href={link({ type: undefined })} class:list={[chip, "h-[34px] text-[13.5px] max-sm:h-8", !f.type ? on : off]}>{tr(lang, "all")}</a>
-      {TYPES.map((t) => (
-        <a href={link({ type: t.id })} class:list={[chip, "h-[34px] text-[13.5px] max-sm:h-8", f.type === t.id ? [t.bg, "border-transparent text-white shadow-lg", t.ring] : off]}>
-          <i class:list={["size-2 rounded-full", f.type === t.id ? "bg-white" : t.bg]}></i>{t[lang]}
-        </a>
-      ))}
-    </nav>
-    <form action="/" method="get" class="shrink-0">
-      {Object.entries({ taluk: f.taluk, place: f.place, type: f.type, q: f.q, lang: lang === "en" ? "en" : undefined }).filter(([, v]) => v).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-      <select name="date" aria-label={tr(lang, "pick")} onchange="this.form.submit()"
-        class="h-[34px] rounded-full border border-black/10 bg-white/70 px-3 text-[13.5px] font-semibold backdrop-blur-md outline-none dark:border-white/10 dark:bg-slate-900/60">
+  <!-- desktop: type + date as two dropdowns (only the taluks are buttons) -->
+  <form action="/" method="get" class="mt-3.5 mb-1.5 flex items-center gap-2.5 max-sm:hidden">
+    {Object.entries({ taluk: f.taluk, place: f.place, q: f.q, lang: lang === "en" ? "en" : undefined }).filter(([, v]) => v).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+    <label class="flex items-center gap-2 text-[13px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "kind")}
+      <select name="type" onchange="this.form.submit()" class={pill}>
+        <option value="">{tr(lang, "all")}</option>
+        {TYPES.map((t) => <option value={t.id} selected={f.type === t.id}>{t[lang]}</option>)}
+      </select></label>
+    <label class="flex items-center gap-2 text-[13px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "day")}
+      <select name="date" onchange="this.form.submit()" class={pill}>
         {dateOpts.map(([v, l]) => <option value={v} selected={(f.date ?? "") === v}>{l}</option>)}
         {f.date && /^\d/.test(f.date) && <option value={f.date} selected>{f.date}</option>}
-      </select>
-    </form>
-  </div>
+      </select></label>
+  </form>
 
   <div class="my-4 flex items-baseline justify-between">
     <div>
