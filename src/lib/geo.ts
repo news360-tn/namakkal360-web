@@ -48,7 +48,9 @@ export function locate(...texts: string[]): { taluk: string; place: string } {
     for (const p of tk.places)
       for (const name of [p.ta, p.en.toLowerCase(), ...(p.alt ?? [])]) {
         const key = /[a-z]/.test(name) ? name : stem(name);
-        if (key.length >= 3 && t.includes(key) && (!best || key.length > best.len)) best = { taluk: tk.id, place: p.id, len: key.length };
+        // "Namakkal" is in almost every location line as the DISTRICT name: it counts only when no other town is named
+        const score = key.length - (p.id === "namakkal" ? 100 : 0);
+        if (key.length >= 3 && t.includes(key) && (!best || score > best.len)) best = { taluk: tk.id, place: p.id, len: score };
       }
   return best ? { taluk: best.taluk, place: best.place } : { taluk: "namakkal", place: "" };
 }

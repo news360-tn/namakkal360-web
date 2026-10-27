@@ -37,6 +37,8 @@ describe("area from the location text", () => {
     ["ப.வேலுார் அருகே", "pvelur", "velur"], ["மோகனூரில்", "mohanur", "mohanur"], ["Kolli Hills rain", "kolli", "kolli"],
     ["காளப்பநாயக்கன்பட்டி துணை மின் நிலையம்", "sendamangalam", "kalappanaickenpatti"], ["நாமக்கல் மாவட்டம்", "namakkal", "namakkal"],
   ])("%s", (text, taluk, place) => expect(locate(text)).toEqual({ taluk, place }));
+  it.each([["Pothanur, Namakkal", "pvelur", "pothanur"], ["பொத்தனூர், நாமக்கல்", "pvelur", "pothanur"], ["Mohanur, Namakkal district", "mohanur", "mohanur"],
+    ["நாமக்கல்", "namakkal", "namakkal"]])("district name does not hide the town: %s", (text, taluk, place) => expect(locate(text)).toEqual({ taluk, place }));
   it("district-wide news without a town goes to Namakkal", () => expect(locate("மாவட்டம் முழுவதும் மழை")).toEqual({ taluk: "namakkal", place: "" }));
 });
 
