@@ -61,6 +61,7 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 <!-- recent-changes:start (updated automatically by .github/workflows/context.yml - do not edit by hand) -->
 | Date | Commit | Change |
 |---|---|---|
+| 2026-10-27 | `68778b2` | PROJECT_CONTEXT.md: how the website works, owner rules, files, settings; recent changes updated automatically after every code commit |
 | 2026-10-27 | `dd06e2f` | Area: the district name 'Namakkal' no longer hides the real town (Pothanur -> P. Velur) |
 | 2026-10-27 | `0455a7b` | Full details: every detail line from the caption (label: value rows and bullet lines) |
 | 2026-10-27 | `b087538` | Dropdowns: brand chevron with proper spacing instead of the squeezed browser arrow |
