@@ -14,7 +14,11 @@ describe("text", () => {
   });
   it("reads the caption's full-details lines", () => {
     const f = factsFromCaption("📰 முழு விவரம்:\nசில வரிகள்\n🕘 நேரம்: காலை 9 மணி முதல் மதியம் 2 மணி வரை\n🏘️ பகுதிகள்: ராசிபுரம் நகரம்\n#Namakkal360");
-    expect(f).toEqual([{ label: "நேரம்", value: "காலை 9 மணி முதல் மதியம் 2 மணி வரை" }, { label: "பகுதிகள்", value: "ராசிபுரம் நகரம்" }]);
+    expect(f).toEqual([{ label: "", value: "சில வரிகள்" }, { label: "நேரம்", value: "காலை 9 மணி முதல் மதியம் 2 மணி வரை" }, { label: "பகுதிகள்", value: "ராசிபுரம் நகரம்" }]);
+  });
+  it("keeps every detail line and stops at the place footer", () => {
+    const f = factsFromCaption("👶 தலைப்பு\n\n📰 முழு விவரம்:\nமுகாம் நடைபெற்றது.\n🩺 வைட்டமின் ஏ முக்கிய சத்து.\n\n📍 நாமக்கல் | 27 அக்டோபர்\nFollow செய்யுங்கள்\n#Namakkal360");
+    expect(f.map((x) => x.value)).toEqual(["முகாம் நடைபெற்றது.", "வைட்டமின் ஏ முக்கிய சத்து."]);
   });
 });
 

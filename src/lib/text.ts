@@ -12,15 +12,20 @@ export function esc(s: unknown): string {
   return clean(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-/** "📰 முழு விவரம்" lines of the Instagram caption ("🕘 நேரம்: காலை 9 ...") -> label/value facts. */
+/** the caption's "📰 முழு விவரம்" section -> details. "🕘 நேரம்: காலை 9" -> label + value; any other detail line -> value only.
+ *  Stops at the place/date footer, the follow line and the hashtags. */
 export function factsFromCaption(caption: string): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
-  for (const raw of String(caption || "").split("\n")) {
-    const line = clean(raw).replace(/^[^\p{L}\p{N}]+/u, "");        // drop the leading emoji
-    const m = line.match(/^([^:：]{2,24})[:：]\s*(.{2,160})$/u);
-    if (m && !/http|#/.test(line)) out.push({ label: m[1].trim(), value: m[2].trim() });
+  const lines = String(caption || "").split("\n");
+  const start = lines.findIndex((l) => /முழு\s*விவரம்|full\s*details/i.test(l));
+  for (const raw of start >= 0 ? lines.slice(start + 1) : lines) {
+    if (/^\s*📍|follow|பின்தொடர|#\w/i.test(raw)) break;
+    const line = clean(raw).replace(/^[^\p{L}\p{N}]+/u, "");
+    if (line.length < 3 || /http/.test(line)) continue;
+    const m = line.match(/^([^:：]{2,24})[:：]\s*(.{2,300})$/u);
+    out.push(m ? { label: m[1].trim(), value: m[2].trim() } : { label: "", value: line });
   }
-  return out.slice(0, 8);
+  return out.slice(0, 12);
 }
 
 /** story text -> lead sentence + short paragraphs (2 sentences each) for easy reading on phones */
