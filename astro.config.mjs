@@ -8,6 +8,6 @@ export default defineConfig({
   devToolbar: { enabled: false },
   session: false,      // no logins or sessions on this site: no extra Cloudflare KV store needed
   adapter: cloudflare({ imageService: "passthrough", imagesBindingName: false }),      // story pictures are already sized by Cloudinary
-  site: "https://namakkal360.workers.dev",
+  site: "https://www.namakkal360.workers.dev",
   vite: { plugins: [tailwindcss()] },
 });

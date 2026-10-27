@@ -1,6 +1,6 @@
 {
   // Cloudflare Worker that serves the website, the news API and the D1 news database
-  "name": "namakkal360",
+  "name": "www",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
