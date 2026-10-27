@@ -6,8 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": "./dist", "binding": "ASSETS" },
   "d1_databases": [
-    // database_id is filled in after `wrangler d1 create namakkal360` (owner's Cloudflare account)
-    { "binding": "DB", "database_name": "namakkal360", "database_id": "local-only" }
+    // online database in the owner's Cloudflare account
+    { "binding": "DB", "database_name": "namakkal360", "database_id": "3f2da005-d435-455d-9bfc-43983ff525a4" }
   ],
   "observability": { "enabled": true }
 }
