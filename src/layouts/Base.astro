@@ -2,11 +2,22 @@
 /* Page frame: header, footer, Namakkal Fort background, drifting smoke. Tailwind classes only. */
 import "../styles/global.css";
 import { tr, type Lang } from "../lib/i18n";
-interface Props { lang: Lang; title?: string; description?: string; image?: string }
-const { lang, title, description, image } = Astro.props;
+interface Props {
+  lang: Lang; title?: string; description?: string; image?: string;
+  /** address without the language (e.g. "/news/RN-140", "/?taluk=rasipuram"); the canonical and hreflang links are built from it */
+  path?: string; type?: "website" | "article"; noindex?: boolean; jsonld?: object[];
+}
+const { lang, title, description, image, path = "/", type = "website", noindex = false, jsonld = [] } = Astro.props;
 const pageTitle = title ? `${title} - ${tr(lang, "brand")} 360` : `${tr(lang, "brand")} 360 - ${tr(lang, "tagline")}`;
 const desc = description ?? tr(lang, "about");
 const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ? "en" : "ta");
+const origin = Astro.url.origin;
+const withLang = (l: Lang) => { const u = new URL(path, origin); if (l === "en") u.searchParams.set("lang", "en"); return u.href; };
+const canonical = withLang(lang);
+const ogImage = image ?? new URL("/logo-512.png", origin).href;
+const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: "Namakkal 360", alternateName: "நாமக்கல் 360",
+  url: origin + "/", logo: { "@type": "ImageObject", url: new URL("/logo-512.png", origin).href, width: 512, height: 512 },
+  sameAs: ["https://www.instagram.com/namakkal.360/"], areaServed: "Namakkal district, Tamil Nadu, India" };
 ---
 <!doctype html>
 <html lang={lang} class="scroll-smooth">
@@ -16,9 +27,25 @@ const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ?
   <title>{pageTitle}</title>
   <meta name="description" content={desc} />
   <meta name="theme-color" content="#0b5d3b" />
+  <link rel="canonical" href={canonical} />
+  <link rel="alternate" hreflang="ta" href={withLang("ta")} />
+  <link rel="alternate" hreflang="en" href={withLang("en")} />
+  <link rel="alternate" hreflang="x-default" href={withLang("ta")} />
+  <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large"} />
+  <meta property="og:site_name" content="Namakkal 360" />
+  <meta property="og:type" content={type} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:locale" content={lang === "ta" ? "ta_IN" : "en_IN"} />
   <meta property="og:title" content={pageTitle} />
   <meta property="og:description" content={desc} />
-  <meta property="og:image" content={image ?? new URL("/logo-512.png", Astro.url).href} />
+  <meta property="og:image" content={ogImage} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={pageTitle} />
+  <meta name="twitter:description" content={desc} />
+  <meta name="twitter:image" content={ogImage} />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="sitemap" href="/sitemap.xml" />
+  {[site, ...jsonld].map((j) => <script type="application/ld+json" set:html={JSON.stringify(j)} />)}
   <link rel="icon" href="/logo-96.png" />
   <link rel="apple-touch-icon" href="/logo-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

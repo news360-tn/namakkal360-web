@@ -36,7 +36,10 @@ const row = "flex gap-2 overflow-x-auto py-0.5 [scrollbar-width:none] [&::-webki
 const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
 const apiQuery = new URLSearchParams(Object.entries({ ...f, page: undefined, lang }).filter(([, v]) => v != null && v !== "") as [string, string][]).toString();
 ---
-<Base lang={lang}>
+<Base lang={lang} path={f.taluk ? `/?taluk=${f.taluk}` : "/"} noindex={!!(f.place || f.type || f.date || f.q)}
+  title={tk ? `${tk[lang]} ${tr(lang, "stories")}` : undefined}
+  description={tk ? `${tk[lang]}: ${tk.places.map((p) => p[lang]).join(", ")} - ${tr(lang, "about")}` : undefined}
+  jsonld={[{ "@context": "https://schema.org", "@type": "WebSite", name: "Namakkal 360", url: Astro.url.origin + "/", inLanguage: ["ta", "en"] }]}>
   <!-- area banner: the only place where place photos are used -->
   <figure class="relative my-4 h-[180px] overflow-hidden rounded-[18px] shadow-[0_20px_50px_-20px_rgba(11,93,59,.45)] max-sm:h-[140px]">
     <img src={banner.img} alt="" class="size-full object-cover object-[30%_40%]" />

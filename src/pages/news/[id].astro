@@ -16,12 +16,25 @@ const pn = placeName(n, lang), place = tk && pn !== tk[lang] ? `${pn}, ${tk[lang
 const body = (lang === "en" && n.body_en) || n.body_ta;
 const shareUrl = new URL(`/news/${n.id}`, Astro.url).href;
 const back = lang === "en" ? "/?lang=en" : "/";
+const published = `${n.day}T${n.time || "00:00"}:00+05:30`;
+const article = {
+  "@context": "https://schema.org", "@type": "NewsArticle", headline: title(n, lang).slice(0, 110), description: body.slice(0, 200),
+  image: n.images.length ? n.images : [new URL("/logo-512.png", Astro.url.origin).href], datePublished: published, dateModified: published,
+  inLanguage: lang === "ta" || !n.body_en ? "ta" : "en", articleSection: t[lang], mainEntityOfPage: shareUrl,
+  contentLocation: { "@type": "Place", name: `${place}, Namakkal district, Tamil Nadu` },
+  author: { "@type": "Organization", name: "Namakkal 360", url: Astro.url.origin + "/" },
+  publisher: { "@type": "NewsMediaOrganization", name: "Namakkal 360", logo: { "@type": "ImageObject", url: new URL("/logo-512.png", Astro.url.origin).href } },
+};
+const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+  { "@type": "ListItem", position: 1, name: "Namakkal 360", item: Astro.url.origin + "/" },
+  ...(tk ? [{ "@type": "ListItem", position: 2, name: tk[lang], item: `${Astro.url.origin}/?taluk=${tk.id}` }] : []),
+  { "@type": "ListItem", position: tk ? 3 : 2, name: title(n, lang).slice(0, 80) }] };
 ---
-<Base lang={lang} title={title(n, lang)} description={body.slice(0, 160)} image={n.images[0]}>
+<Base lang={lang} title={title(n, lang)} description={body.slice(0, 160)} image={n.images[0]} path={`/news/${n.id}`} type="article" noindex={lang === "en" && !n.body_en} jsonld={[article, crumbs]}>
   <article class="mx-auto my-5 max-w-[720px] overflow-hidden rounded-[22px] border border-black/5 bg-white/80 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70">
     <div class="aspect-video overflow-hidden">
       {n.images[0]
-        ? <img src={n.images[0]} alt="" class="size-full object-cover" />
+        ? <img src={n.images[0]} alt={title(n, lang)} class="size-full object-cover" />
         : <span class:list={["grid size-full place-items-center", t.text, t.soft]} set:html={icon(n.type, "size-14")} />}
     </div>
     <div class="p-5 sm:p-7">
