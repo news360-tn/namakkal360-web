@@ -61,6 +61,7 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 <!-- recent-changes:start (updated automatically by .github/workflows/context.yml - do not edit by hand) -->
 | Date | Commit | Change |
 |---|---|---|
+| 2026-11-19 | `a81ddfe` | Dependencies: security updates (astro 7.4.13, undici 7.30.1, wrangler 4.163.0) - npm audit now 0 issues; tests and build pass |
 | 2026-10-27 | `68778b2` | PROJECT_CONTEXT.md: how the website works, owner rules, files, settings; recent changes updated automatically after every code commit |
 | 2026-10-27 | `dd06e2f` | Area: the district name 'Namakkal' no longer hides the real town (Pothanur -> P. Velur) |
 | 2026-10-27 | `0455a7b` | Full details: every detail line from the caption (label: value rows and bullet lines) |
