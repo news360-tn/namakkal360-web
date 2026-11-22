@@ -2,7 +2,7 @@
 import type { News } from "./news";
 import { esc } from "./text";
 import { typeOf } from "./types";
-import { placeOf, talukOf } from "./geo";
+import { placeOf, talukOf, districtOf } from "./geo";
 import { tr, type Lang } from "./i18n";
 import { istDay } from "./news";
 
@@ -17,6 +17,10 @@ export const icon = (k: string, cls = "size-9") =>
   `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k] ?? ICON.civic}</svg>`;
 
 export const placeName = (n: News, lang: Lang) => { const p = placeOf(n.taluk, n.place) ?? talukOf(n.taluk); return p ? p[lang] : ""; };
+/** short district name ("கோவை" / "Coimbatore") */
+export const districtName = (n: News, lang: Lang) => { const d = districtOf(n.district || "namakkal"); return d ? (lang === "ta" ? d.short_ta : d.short_en) : ""; };
+/** "Pollachi · Coimbatore" on the all-district pages, just "Pollachi" on a district page */
+const where = (n: News, lang: Lang, withDistrict: boolean) => { const p = placeName(n, lang), dn = districtName(n, lang); return withDistrict && dn && dn !== p ? `${p} · ${dn}` : p; };
 export const title = (n: News, lang: Lang) => (lang === "en" && n.title_en) || n.title_ta;
 export function when(n: News, lang: Lang, now = Date.now()) {
   const d = n.day === istDay(0, now) ? tr(lang, "today") : n.day === istDay(-1, now) ? tr(lang, "yesterday") :
@@ -35,7 +39,7 @@ export function clock(hhmm: string, lang: Lang): string {
 }
 export const href = (n: News, lang: Lang) => `/news/${encodeURIComponent(n.id)}${lang === "en" ? "?lang=en" : ""}`;
 
-export function cardHtml(n: News, lang: Lang): string {
+export function cardHtml(n: News, lang: Lang, withDistrict = false): string {
   const t = typeOf(n.type), img = n.images[0];
   const pic = img
     ? `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" class="size-full object-cover transition duration-500 group-hover:scale-105">`
@@ -43,19 +47,19 @@ export function cardHtml(n: News, lang: Lang): string {
   return `<a href="${href(n, lang)}" class="group flex animate-rise flex-col overflow-hidden rounded-[18px] border border-t-[3px] border-black/5 ${t.line} bg-white/75 shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[.97] max-sm:flex-row dark:border-white/10 dark:bg-slate-900/65">
     <span class="block aspect-video w-full overflow-hidden max-sm:aspect-auto max-sm:w-28 max-sm:shrink-0">${pic}</span>
     <span class="flex flex-1 flex-col gap-1.5 p-4 max-sm:p-3">
-      <span class="flex min-w-0 items-center gap-1.5 text-[12.5px] font-semibold whitespace-nowrap text-slate-500 dark:text-slate-400"><b class="${t.text}">${esc(t[lang])}</b><span class="truncate">· ${esc(placeName(n, lang))}</span></span>
+      <span class="flex min-w-0 items-center gap-1.5 text-[12.5px] font-semibold whitespace-nowrap text-slate-500 dark:text-slate-400"><b class="${t.text}">${esc(t[lang])}</b><span class="truncate">· ${esc(where(n, lang, withDistrict))}</span></span>
       <span class="text-[16.5px] font-bold leading-snug text-slate-900 max-sm:text-[15.5px] dark:text-slate-100">${esc(title(n, lang))}</span>
       <span class="mt-auto pt-1 text-[12.5px] font-semibold text-slate-500 dark:text-slate-400">${esc(when(n, lang))}</span>
     </span></a>`;
 }
 
 /** cut hours on a 6 AM - 10 PM line */
-export function alertHtml(n: News, lang: Lang): string {
+export function alertHtml(n: News, lang: Lang, withDistrict = false): string {
   const pos = (h: number) => Math.max(0, Math.min(100, ((h - 6) / 16) * 100)).toFixed(1);
   const bar = n.power_from != null && n.power_to != null
     ? `<span class="relative mt-2 block h-2 rounded-full bg-black/10"><span class="absolute inset-y-0 rounded-full bg-linear-to-r from-amber-500 to-red360" style="left:${pos(n.power_from)}%;right:${(100 - +pos(n.power_to)).toFixed(1)}%"></span></span>` : "";
   return `<a href="${href(n, lang)}" class="mb-3.5 flex items-center gap-3.5 rounded-[18px] bg-linear-to-r from-amber-100 to-orange-200 p-4 text-amber-950 shadow-sm transition active:scale-[.98] dark:from-amber-950 dark:to-orange-950 dark:text-amber-100">
     <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-linear-to-br from-amber-500 to-red360 text-white">${icon("power", "size-6")}</span>
-    <span class="flex-1"><span class="block text-[12.5px] font-semibold opacity-75">${esc(tr(lang, "power"))} · ${esc(placeName(n, lang))} · ${esc(when(n, lang))}</span>
+    <span class="flex-1"><span class="block text-[12.5px] font-semibold opacity-75">${esc(tr(lang, "power"))} · ${esc(where(n, lang, withDistrict))} · ${esc(when(n, lang))}</span>
       <span class="block text-base font-bold leading-snug">${esc(title(n, lang))}</span>${bar}</span></a>`;
 }

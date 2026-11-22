@@ -78,3 +78,23 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 | 2026-10-27 | `14db226` | Namakkal 360 website: Astro + Tailwind CSS on Cloudflare Workers with D1 news store, area/type/date filters, story pages, news API and pipeline ingest; design system |
 | 2026-10-27 | `6d1b3dd` | Initial commit |
 <!-- recent-changes:end -->
+
+## 7 districts on one site (22 Nov 2026)
+
+- `/` is now the all-district home (News 360): one colour card per district (today's count + newest headline), then the latest news of all 7 districts.
+- `/namakkal`, `/coimbatore`, `/salem`, `/erode`, `/karur`, `/tirupur`, `/trichy`: one district's news with its taluk / town / type / date filters.
+  Old Namakkal links (`/?taluk=rasipuram`) move to `/namakkal?taluk=rasipuram` (301). Story links (`/news/RN-140`) do not change.
+- Districts, taluks and towns: `src/lib/geo.ts` (`DISTRICTS`). Taluk ids are unique across districts.
+- Database: new column `district` (migration `db/migrations/0001_district.sql`; old rows become Namakkal).
+  Story ids: Namakkal keeps `RN-140`; other districts get their code: `CBE-RN-598`, `SLM-`, `ERD-`, `KRR-`, `TPR-`, `TRY-`.
+- `/api/ingest` takes `"district": "coimbatore"` (no district = Namakkal). Every posting repo's `poster/website.py` sends it.
+- A website problem never stops Instagram / Facebook posting: `website.send` runs after posting, only logs, and does nothing
+  while the GitHub secret `WEBSITE_INGEST_KEY` is missing.
+
+### Owner steps to go live (on the computer with the Cloudflare login)
+
+1. `git pull` then `npm install`
+2. `npm run deploy`  (tests, build, adds the district column to the online database, deploys the worker)
+3. One key for all 7 pages: `npx wrangler secret put INGEST_KEY` (type a long random key), then add the SAME key as the
+   repository secret `WEBSITE_INGEST_KEY` in all 7 posting repos (Settings > Secrets and variables > Actions).
+4. Optional: in each posting repo, run the "website-backfill" workflow once to send the stories already posted.

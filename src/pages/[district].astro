@@ -1,0 +1,9 @@
+---
+/* "/namakkal", "/coimbatore", "/salem", "/erode", "/karur", "/tirupur", "/trichy" - one district's news */
+import Home from "../components/Home.astro";
+import { districtOf } from "../lib/geo";
+
+const d = districtOf(Astro.params.district);
+if (!d) return new Response("Not found", { status: 404 });
+---
+<Home district={d.id} />

@@ -1,16 +1,16 @@
 /** Reading and writing stories in the D1 news store. */
 import { clean, dropOutro, factsFromCaption } from "./text";
 import { typeFromCategory, TYPES } from "./types";
-import { locate, TALUKS } from "./geo";
+import { locate, districtOf, districtOfTaluk, rowId } from "./geo";
 import { powerHours } from "./power";
 
 export interface News {
-  id: string; day: string; time: string; taluk: string; place: string; type: string;
+  id: string; district: string; day: string; time: string; taluk: string; place: string; type: string;
   title_ta: string; title_en: string; body_ta: string; body_en: string;
   facts: { label: string; value: string }[]; images: string[]; reel_url: string; source_url: string;
   power_from: number | null; power_to: number | null;
 }
-export interface Filter { taluk?: string; place?: string; type?: string; date?: string; q?: string; page?: number }
+export interface Filter { district?: string; taluk?: string; place?: string; type?: string; date?: string; q?: string; page?: number }
 export const PAGE = 15;      // news per page
 
 /** today in India (IST), YYYY-MM-DD */
@@ -18,8 +18,11 @@ export const istDay = (offsetDays = 0, now = Date.now()) => new Date(now + 5.5 *
 
 /** only known values reach the database query */
 export function sanitize(f: Record<string, string | null | undefined>): Filter {
-  const tk = TALUKS.find((t) => t.id === f.taluk);
+  // a taluk alone (old links: /?taluk=rasipuram) tells the district; a taluk of another district is ignored
+  const d = districtOf(f.district ?? undefined) ?? (f.district ? undefined : districtOfTaluk(f.taluk ?? ""));
+  const tk = d?.taluks.find((t) => t.id === f.taluk);
   return {
+    district: d?.id,
     taluk: tk?.id,
     place: tk?.places.find((p) => p.id === f.place)?.id,
     type: TYPES.find((t) => t.id === f.type)?.id,
@@ -31,6 +34,7 @@ export function sanitize(f: Record<string, string | null | undefined>): Filter {
 
 export function whereOf(f: Filter, now = Date.now()): { sql: string; args: (string | number)[] } {
   const w: string[] = [], a: (string | number)[] = [];
+  if (f.district) { w.push("district = ?"); a.push(f.district); }
   if (f.taluk) { w.push("taluk = ?"); a.push(f.taluk); }
   if (f.place) { w.push("place = ?"); a.push(f.place); }
   if (f.type) { w.push("type = ?"); a.push(f.type); }
@@ -54,7 +58,7 @@ export async function list(db: D1Database, f: Filter): Promise<{ items: News[]; 
 
 /** today's / tomorrow's power cuts (pinned above the news) */
 export async function powerAlerts(db: D1Database, f: Filter): Promise<News[]> {
-  const { sql, args } = whereOf({ taluk: f.taluk, place: f.place });
+  const { sql, args } = whereOf({ district: f.district, taluk: f.taluk, place: f.place });
   const rows = await db.prepare(`SELECT * FROM news ${sql ? sql + " AND" : "WHERE"} type = 'power' AND day >= ? ORDER BY day DESC, time DESC LIMIT 5`)
     .bind(...args, istDay(-1)).all();
   return (rows.results ?? []).map(parse);
@@ -70,21 +74,34 @@ export async function counts(db: D1Database): Promise<Record<string, number>> {
   return Object.fromEntries((rows.results ?? []).map((r) => [r.taluk, r.n]));
 }
 
+/** per district: all stories, today's stories and the newest headline (for the district cards on the home page) */
+export interface DistrictStat { total: number; today: number; latest?: News }
+export async function districtStats(db: D1Database, now = Date.now()): Promise<Record<string, DistrictStat>> {
+  const rows = await db.prepare("SELECT district, COUNT(*) AS n, SUM(day = ?) AS t FROM news GROUP BY district")
+    .bind(istDay(0, now)).all<{ district: string; n: number; t: number }>();
+  const out: Record<string, DistrictStat> = {};
+  for (const r of rows.results ?? []) out[r.district] = { total: r.n, today: r.t ?? 0 };
+  const latest = await db.prepare(`SELECT * FROM news n WHERE id = (SELECT id FROM news m WHERE m.district = n.district ORDER BY day DESC, time DESC LIMIT 1)`).all();
+  for (const r of latest.results ?? []) { const x = parse(r); (out[x.district] ??= { total: 0, today: 0 }).latest = x; }
+  return out;
+}
+
 /** a story as the pipeline sends it -> a clean row (area, type, facts and power hours worked out here) */
 export interface Incoming {
   story_id: string; headline_ta: string; headline_en?: string; reel_script?: string; story_en?: string; caption?: string;
-  location?: string; category?: string; images?: string[]; reel_link?: string; source?: string; published?: string; filed_at?: string;
+  district?: string; location?: string; category?: string; images?: string[]; reel_link?: string; source?: string; published?: string; filed_at?: string;
 }
 export function toRow(s: Incoming): News {
   const title_ta = clean(s.headline_ta), body_ta = dropOutro(s.reel_script ?? "");
-  const { taluk, place } = locate(s.location ?? "", title_ta);
+  const district = districtOf(s.district)?.id ?? "namakkal";      // stories without a district are Namakkal's (the first site)
+  const { taluk, place } = locate(district, s.location ?? "", title_ta);
   const type = typeFromCategory(s.category ?? "", title_ta);
   const when = new Date(s.filed_at || s.published || Date.now());
   const ist = new Date((isNaN(+when) ? Date.now() : +when) + 5.5 * 3600e3).toISOString();
   const hours = type === "power" ? powerHours(`${title_ta} ${body_ta} ${s.caption ?? ""}`) : null;
   const reel = String(s.reel_link ?? "").match(/https:\/\/www\.instagram\.com\/reel\/[\w-]+\/?/)?.[0] ?? "";
   return {
-    id: clean(s.story_id), day: ist.slice(0, 10), time: ist.slice(11, 16), taluk, place, type,
+    id: rowId(district, clean(s.story_id)), district, day: ist.slice(0, 10), time: ist.slice(11, 16), taluk, place, type,
     title_ta, title_en: clean(s.headline_en), body_ta, body_en: dropOutro(s.story_en ?? ""),
     facts: factsFromCaption(s.caption ?? ""), images: (s.images ?? []).filter((u) => /^https:\/\//.test(u)).slice(0, 6),
     reel_url: reel, source_url: /^https?:\/\//.test(s.source ?? "") ? s.source! : "",
@@ -93,12 +110,12 @@ export function toRow(s: Incoming): News {
 }
 
 export async function upsert(db: D1Database, n: News): Promise<void> {
-  await db.prepare(`INSERT INTO news (id, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
-    ON CONFLICT(id) DO UPDATE SET day=excluded.day, time=excluded.time, taluk=excluded.taluk, place=excluded.place, type=excluded.type,
+  await db.prepare(`INSERT INTO news (id, district, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+    ON CONFLICT(id) DO UPDATE SET district=excluded.district, day=excluded.day, time=excluded.time, taluk=excluded.taluk, place=excluded.place, type=excluded.type,
       title_ta=excluded.title_ta, title_en=excluded.title_en, body_ta=excluded.body_ta, body_en=excluded.body_en, facts=excluded.facts,
       images=excluded.images, reel_url=excluded.reel_url, source_url=excluded.source_url, power_from=excluded.power_from,
       power_to=excluded.power_to, updated_at=datetime('now')`)
-    .bind(n.id, n.day, n.time, n.taluk, n.place, n.type, n.title_ta, n.title_en, n.body_ta, n.body_en,
+    .bind(n.id, n.district, n.day, n.time, n.taluk, n.place, n.type, n.title_ta, n.title_en, n.body_ta, n.body_en,
       JSON.stringify(n.facts), JSON.stringify(n.images), n.reel_url, n.source_url, n.power_from, n.power_to).run();
 }

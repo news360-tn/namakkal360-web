@@ -2,22 +2,29 @@
 /* Page frame: header, footer, Namakkal Fort background, drifting smoke. Tailwind classes only. */
 import "../styles/global.css";
 import { tr, type Lang } from "../lib/i18n";
+import { DISTRICTS, districtOf } from "../lib/geo";
 interface Props {
   lang: Lang; title?: string; description?: string; image?: string;
   /** address without the language (e.g. "/news/RN-140", "/?taluk=rasipuram"); the canonical and hreflang links are built from it */
   path?: string; type?: "website" | "article"; noindex?: boolean; jsonld?: object[];
+  /** the district page this is (its name is the brand: "Coimbatore 360"); none = the all-district site "News 360" */
+  district?: string;
 }
-const { lang, title, description, image, path = "/", type = "website", noindex = false, jsonld = [] } = Astro.props;
-const pageTitle = title ? `${title} - ${tr(lang, "brand")} 360` : `${tr(lang, "brand")} 360 - ${tr(lang, "tagline")}`;
-const desc = description ?? tr(lang, "about");
+const { lang, title, description, image, path = "/", type = "website", noindex = false, jsonld = [], district } = Astro.props;
+const d = districtOf(district);
+const brand = d ? (lang === "ta" ? d.short_ta : d.short_en) : tr(lang, "hubBrand");
+const home = d ? `/${d.id}` : "/";
+const pageTitle = title ? `${title} - ${brand} 360` : `${brand} 360 - ${d ? tr(lang, "tagline") : tr(lang, "hubTagline")}`;
+const desc = description ?? (d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout"));
 const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ? "en" : "ta");
 const origin = Astro.url.origin;
 const withLang = (l: Lang) => { const u = new URL(path, origin); if (l === "en") u.searchParams.set("lang", "en"); return u.href; };
 const canonical = withLang(lang);
 const ogImage = image ?? new URL("/logo-512.png", origin).href;
-const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: "Namakkal 360", alternateName: "நாமக்கல் 360",
+const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: "News 360", alternateName: "Namakkal 360",
   url: origin + "/", logo: { "@type": "ImageObject", url: new URL("/logo-512.png", origin).href, width: 512, height: 512 },
-  sameAs: ["https://www.instagram.com/namakkal.360/"], areaServed: "Namakkal district, Tamil Nadu, India" };
+  sameAs: ["https://www.instagram.com/namakkal.360/"],
+  areaServed: ["Namakkal", "Coimbatore", "Salem", "Erode", "Karur", "Tirupur", "Tiruchirappalli"].map((n) => ({ "@type": "AdministrativeArea", name: `${n} district, Tamil Nadu, India` })) };
 ---
 <!doctype html>
 <html lang={lang} class="scroll-smooth">
@@ -32,7 +39,7 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
   <link rel="alternate" hreflang="en" href={withLang("en")} />
   <link rel="alternate" hreflang="x-default" href={withLang("ta")} />
   <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large"} />
-  <meta property="og:site_name" content="Namakkal 360" />
+  <meta property="og:site_name" content={`${brand} 360`} />
   <meta property="og:type" content={type} />
   <meta property="og:url" content={canonical} />
   <meta property="og:locale" content={lang === "ta" ? "ta_IN" : "en_IN"} />
@@ -69,9 +76,11 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
 
   <header class="sticky top-0 z-30 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white shadow-[0_6px_24px_-10px_rgba(11,93,59,.55)]">
     <div class="mx-auto flex h-[62px] max-w-[1120px] items-center gap-2.5 px-4">
-      <a href={lang === "en" ? "/?lang=en" : "/"} class="mr-auto flex items-center gap-2.5">
-        <img src="/logo-96.png" alt="" width="40" height="40" class="size-10 rounded-full ring-2 ring-white/90" />
-        <b class="text-[19px] font-extrabold tracking-tight whitespace-nowrap max-[380px]:text-[17px]">{tr(lang, "brand")} <span class="bg-linear-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">360</span></b>
+      <a href={lang === "en" ? `${home}?lang=en` : home} class="mr-auto flex items-center gap-2.5">
+        {d?.id === "namakkal"
+          ? <img src="/logo-96.png" alt="" width="40" height="40" class="size-10 rounded-full ring-2 ring-white/90" />
+          : <span aria-hidden="true" class:list={["grid size-10 place-items-center rounded-full bg-linear-to-br text-[12px] font-black tracking-tight text-white ring-2 ring-white/90", d ? d.art : "from-sun via-orange360 to-red360"]}>360</span>}
+        <b class="text-[19px] font-extrabold tracking-tight whitespace-nowrap max-[380px]:text-[17px]">{brand} <span class="bg-linear-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">360</span></b>
       </a>
       <button id="searchBtn" type="button" aria-label="Search" class="grid size-[38px] place-items-center rounded-full bg-white/20 transition active:scale-95">
         <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
@@ -84,11 +93,15 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
         <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
       </button>
     </div>
-    <form id="searchBar" action="/" method="get" class="mx-auto hidden max-w-[1120px] px-4 pb-3">
+    <form id="searchBar" action={home} method="get" class="mx-auto hidden max-w-[1120px] px-4 pb-3">
       {lang === "en" && <input type="hidden" name="lang" value="en" />}
       <input name="q" type="search" placeholder={tr(lang, "search")} value={Astro.url.searchParams.get("q") ?? ""}
         class="h-11 w-full rounded-xl bg-white/95 px-3.5 text-slate-900 outline-none placeholder:text-slate-500" />
     </form>
+    <nav aria-label="Districts" class="mx-auto flex max-w-[1120px] gap-1 overflow-x-auto px-4 pb-2 text-[13px] font-bold [scrollbar-width:none]">
+      <a href={lang === "en" ? "/?lang=en" : "/"} class:list={["shrink-0 rounded-full px-3 py-1 transition", !d ? "bg-white text-brand" : "bg-white/15 hover:bg-white/25"]}>{tr(lang, "all")}</a>
+      {DISTRICTS.map((x) => <a href={lang === "en" ? `/${x.id}?lang=en` : `/${x.id}`} class:list={["shrink-0 rounded-full px-3 py-1 whitespace-nowrap transition", d?.id === x.id ? "bg-white text-brand" : "bg-white/15 hover:bg-white/25"]}>{lang === "ta" ? x.short_ta : x.short_en}</a>)}
+    </nav>
     <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
   </header>
 
@@ -97,8 +110,9 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
   <footer class="mt-10 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white/90">
     <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
     <div class="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 py-6 text-[13px]">
-      <span>{tr(lang, "about")}</span>
-      <a href="https://www.instagram.com/namakkal.360/" target="_blank" rel="noopener" class="font-bold text-white">Instagram @namakkal.360</a>
+      <span>{desc && !title ? desc : d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout")}</span>
+      <a href={lang === "en" ? "/?lang=en" : "/"} class="font-bold text-white">{tr(lang, "allDistricts")}</a>
+      {d?.insta && <a href={`https://www.instagram.com/${d.insta}/`} target="_blank" rel="noopener" class="font-bold text-white">Instagram @{d.insta}</a>}
     </div>
   </footer>
 

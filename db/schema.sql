@@ -1,6 +1,7 @@
--- Namakkal 360 news store (Cloudflare D1 / SQLite). One row per story; the pipeline sends every new story here.
+-- News 360 news store (7 districts) (Cloudflare D1 / SQLite). One row per story; the pipeline sends every new story here.
 CREATE TABLE IF NOT EXISTS news (
-  id          TEXT PRIMARY KEY,          -- story id from the pipeline (RN-140)
+  id          TEXT PRIMARY KEY,          -- story id from the pipeline (RN-140; other districts with their code: CBE-RN-598)
+  district    TEXT NOT NULL DEFAULT 'namakkal',  -- namakkal / coimbatore / salem / erode / karur / tirupur / trichy
   day         TEXT NOT NULL,             -- IST date the news belongs to, YYYY-MM-DD
   time        TEXT NOT NULL DEFAULT '',  -- IST HH:MM it was filed
   taluk       TEXT NOT NULL,
@@ -21,3 +22,4 @@ CREATE TABLE IF NOT EXISTS news (
 CREATE INDEX IF NOT EXISTS news_day   ON news(day DESC, time DESC);
 CREATE INDEX IF NOT EXISTS news_taluk ON news(taluk, day DESC);
 CREATE INDEX IF NOT EXISTS news_type  ON news(type, day DESC);
+CREATE INDEX IF NOT EXISTS news_district ON news(district, day DESC, time DESC);

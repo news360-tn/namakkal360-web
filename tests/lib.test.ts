@@ -36,10 +36,10 @@ describe("area from the location text", () => {
     ["மல்லசமுத்திரம் அருகே", "tiruchengode", "mallasamudram"], ["ப.வேலூர் அருகே", "pvelur", "velur"],
     ["ப.வேலுார் அருகே", "pvelur", "velur"], ["மோகனூரில்", "mohanur", "mohanur"], ["Kolli Hills rain", "kolli", "kolli"],
     ["காளப்பநாயக்கன்பட்டி துணை மின் நிலையம்", "sendamangalam", "kalappanaickenpatti"], ["நாமக்கல் மாவட்டம்", "namakkal", "namakkal"],
-  ])("%s", (text, taluk, place) => expect(locate(text)).toEqual({ taluk, place }));
+  ])("%s", (text, taluk, place) => expect(locate("namakkal", text)).toEqual({ taluk, place }));
   it.each([["Pothanur, Namakkal", "pvelur", "pothanur"], ["பொத்தனூர், நாமக்கல்", "pvelur", "pothanur"], ["Mohanur, Namakkal district", "mohanur", "mohanur"],
-    ["நாமக்கல்", "namakkal", "namakkal"]])("district name does not hide the town: %s", (text, taluk, place) => expect(locate(text)).toEqual({ taluk, place }));
-  it("district-wide news without a town goes to Namakkal", () => expect(locate("மாவட்டம் முழுவதும் மழை")).toEqual({ taluk: "namakkal", place: "" }));
+    ["நாமக்கல்", "namakkal", "namakkal"]])("district name does not hide the town: %s", (text, taluk, place) => expect(locate("namakkal", text)).toEqual({ taluk, place }));
+  it("district-wide news without a town goes to Namakkal", () => expect(locate("namakkal", "மாவட்டம் முழுவதும் மழை")).toEqual({ taluk: "namakkal", place: "" }));
 });
 
 describe("power-cut hours", () => {
@@ -52,7 +52,7 @@ describe("power-cut hours", () => {
 
 describe("filters", () => {
   it("only known values reach the query", () => {
-    expect(sanitize({ taluk: "rasipuram'; DROP", type: "bogus", date: "2026-13-99x", page: "-5" })).toEqual({ taluk: undefined, place: undefined, type: undefined, date: undefined, q: undefined, page: 0 });
+    expect(sanitize({ taluk: "rasipuram'; DROP", type: "bogus", date: "2026-13-99x", page: "-5" })).toEqual({ district: undefined, taluk: undefined, place: undefined, type: undefined, date: undefined, q: undefined, page: 0 });
     expect(sanitize({ taluk: "rasipuram", place: "vennandur", type: "power", date: "today" })).toMatchObject({ taluk: "rasipuram", place: "vennandur", type: "power", date: "today" });
     expect(sanitize({ taluk: "rasipuram", place: "mohanur" }).place).toBeUndefined();      // a town of another taluk is ignored
   });
@@ -73,7 +73,7 @@ describe("a story from the pipeline", () => {
     filed_at: "2026-10-26T20:44:00Z",
   });
   it("is filed under the right area, type, day and hours, cleaned", () => {
-    expect(row).toMatchObject({ id: "RN-131", taluk: "sendamangalam", place: "kalappanaickenpatti", type: "power", day: "2026-10-27", time: "02:14",
+    expect(row).toMatchObject({ id: "RN-131", district: "namakkal", taluk: "sendamangalam", place: "kalappanaickenpatti", type: "power", day: "2026-10-27", time: "02:14",
       power_from: 9, power_to: 14, reel_url: "https://www.instagram.com/reel/De_Zjyuj53j/", images: ["https://res.cloudinary.com/x/a.jpg"] });
     expect(row.title_en).toBe("Kalappanaickenpatti substation maintenance - power cut");
     expect(row.body_ta).not.toMatch(/<b>/);
@@ -114,4 +114,49 @@ describe("time with AM / PM", () => {
   it.each([["06:25", "காலை 6:25", "6:25 AM"], ["10:14", "காலை 10:14", "10:14 AM"], ["12:00", "மதியம் 12:00", "12:00 PM"],
     ["14:30", "மதியம் 2:30", "2:30 PM"], ["18:05", "மாலை 6:05", "6:05 PM"], ["22:23", "இரவு 10:23", "10:23 PM"], ["02:14", "இரவு 2:14", "2:14 AM"]])
     ("%s", (t, ta, en) => { expect(clock(t, "ta")).toBe(ta); expect(clock(t, "en")).toBe(en); });
+});
+
+import { DISTRICTS, TALUKS, districtOfTaluk, rowId } from "../src/lib/geo";
+describe("one site for all 7 districts", () => {
+  it("has the 7 districts and taluk ids that never repeat", () => {
+    expect(DISTRICTS.map((d) => d.id)).toEqual(["namakkal", "coimbatore", "salem", "erode", "karur", "tirupur", "trichy"]);
+    expect(new Set(TALUKS.map((t) => t.id)).size).toBe(TALUKS.length);
+    for (const d of DISTRICTS) for (const t of d.taluks) expect(new Set(t.places.map((p) => p.id)).size).toBe(t.places.length);
+  });
+  it.each([
+    ["coimbatore", "பொள்ளாச்சி அருகே விபத்து", "pollachi", "pollachi"], ["coimbatore", "மேட்டுப்பாளையம், கோவை", "mettupalayam", "mettupalayam"],
+    ["coimbatore", "தடாகம், கோவை", "coimbatore", "thadagam"], ["coimbatore", "கோவை மாநகரில்", "coimbatore", "kovai"],
+    ["salem", "ஆத்தூரில் மழை", "attur", "attur"], ["salem", "மேட்டூர் அணை, சேலம்", "mettur", "mettur"], ["salem", "சேலம் மாவட்டம்", "salem", "salem"],
+    ["erode", "கோபி அருகே", "gobi", "gobi-town"], ["erode", "சத்தியமங்கலம் வனப்பகுதி", "sathy", "sathy"], ["erode", "Perundurai, Erode", "perundurai", "perundurai"],
+    ["karur", "குளித்தலை, கரூர்", "kulithalai", "kulithalai"], ["karur", "புகழூர் காகித ஆலை", "manmangalam", "pugalur"],
+    ["tirupur", "பல்லடம் அருகே", "palladam", "palladam"], ["tirupur", "உடுமலை, திருப்பூர்", "udumalai", "udumalai-town"], ["tirupur", "வெள்ளகோவில்", "kangeyam", "vellakoil"],
+    ["trichy", "ஸ்ரீரங்கம் கோவில்", "srirangam", "srirangam"], ["trichy", "மணப்பாறை, திருச்சி", "manapparai", "manapparai"], ["trichy", "சமயபுரம்", "manachanallur", "samayapuram"],
+  ])("%s: %s", (d, text, taluk, place) => expect(locate(d, text)).toEqual({ taluk, place }));
+  it("news without a town goes to the district's main taluk", () => {
+    expect(locate("salem", "மாவட்டம் முழுவதும்")).toEqual({ taluk: "salem", place: "" });
+    expect(locate("trichy", "nothing here")).toEqual({ taluk: "trichy", place: "" });
+  });
+  it("a story id is unique across districts; Namakkal keeps its old ids", () => {
+    expect(rowId("namakkal", "RN-140")).toBe("RN-140");
+    expect(rowId("coimbatore", "RN-140")).toBe("CBE-RN-140");
+    expect(new Set(DISTRICTS.map((d) => rowId(d.id, "RN-1"))).size).toBe(7);
+  });
+  it("a story is filed under its district", () => {
+    const r = toRow({ story_id: "RN-598", district: "coimbatore", headline_ta: "பொள்ளாச்சியில் சாலை விபத்து", location: "பொள்ளாச்சி, கோவை", category: "Crime & Safety" });
+    expect(r).toMatchObject({ id: "CBE-RN-598", district: "coimbatore", taluk: "pollachi", type: "accident" });
+    expect(toRow({ story_id: "RN-1", headline_ta: "ராசிபுரத்தில் மின்தடை" })).toMatchObject({ id: "RN-1", district: "namakkal", taluk: "rasipuram" });
+  });
+  it("filters: an old taluk link finds its district; a taluk of another district is ignored", () => {
+    expect(sanitize({ taluk: "rasipuram" })).toMatchObject({ district: "namakkal", taluk: "rasipuram" });
+    expect(sanitize({ district: "salem", taluk: "rasipuram" })).toMatchObject({ district: "salem", taluk: undefined });
+    expect(sanitize({ district: "nowhere" }).district).toBeUndefined();
+    expect(whereOf({ district: "erode", taluk: "gobi" }).sql).toBe("WHERE district = ? AND taluk = ?");
+    expect(districtOfTaluk("pollachi")?.id).toBe("coimbatore");
+  });
+  it("cards on the all-district page say the district", () => {
+    const r = toRow({ story_id: "RN-5", district: "trichy", headline_ta: "மணப்பாறையில் நிகழ்ச்சி", location: "மணப்பாறை" });
+    expect(cardHtml(r, "en", true)).toContain("Manapparai · Trichy");
+    expect(cardHtml(r, "en")).not.toContain("· Trichy");
+    expect(cardHtml(r, "ta", true)).toContain("/news/TRY-RN-5");
+  });
 });

@@ -8,7 +8,9 @@
     "preview": "wrangler pages dev ./dist",
     "test": "vitest run",
     "db:local": "wrangler d1 execute namakkal360 --local --file=db/schema.sql",
-    "db:seed": "wrangler d1 execute namakkal360 --local --file=db/seed.sql"
+    "db:seed": "wrangler d1 execute namakkal360 --local --file=db/seed.sql",
+    "db:migrate": "wrangler d1 migrations apply namakkal360 --remote",
+    "deploy": "npm test && astro build && wrangler d1 migrations apply namakkal360 --remote && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.4.2",

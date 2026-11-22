@@ -1,8 +1,10 @@
 /** POST /api/ingest  (Authorization: Bearer <INGEST_KEY>)
- *  The news pipeline sends each new story here (one story or a list); it is stored at once and shows on the site. */
+ *  Each district's news pipeline sends every new story here (one story or a list, with "district": "coimbatore" etc.;
+ *  no district = Namakkal); it is stored at once and shows on the site. */
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { toRow, upsert, type Incoming } from "../../lib/news";
+import { districtOf } from "../../lib/geo";
 
 export const POST: APIRoute = async ({ request }) => {
   const key = (env as any).INGEST_KEY as string | undefined;
@@ -17,6 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!s || typeof s.story_id !== "string" || !/^[A-Z]{1,4}-\d{1,7}$/.test(s.story_id) || typeof s.headline_ta !== "string" || !s.headline_ta.trim()) {
       skipped.push({ id: String((s as any)?.story_id ?? "?"), why: "story_id and headline_ta are required" }); continue;
     }
+    if (s.district !== undefined && !districtOf(s.district)) { skipped.push({ id: s.story_id, why: `unknown district ${String(s.district).slice(0, 20)}` }); continue; }
     await upsert((env as any).DB as D1Database, toRow(s));
     saved.push(s.story_id);
   }
