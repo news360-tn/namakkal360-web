@@ -204,7 +204,7 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
   // back-to-top, "my area" (kept only in this browser)
   const top = document.getElementById("toTop")!;
   addEventListener("scroll", () => top.toggleAttribute("data-on", scrollY > 600), { passive: true });
-  top.onclick = () => scrollTo({ top: 0 });
+  top.onclick = () => scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 
   const star = document.getElementById("star");
   const mine = (() => { try { return localStorage.getItem("n360area") || ""; } catch { return ""; } })();
