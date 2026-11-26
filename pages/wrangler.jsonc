@@ -1,6 +1,6 @@
 {
-  // Cloudflare Pages project "news360" = the public address news360.pages.dev (deployed by .github/workflows/deploy.yml)
-  "name": "news360",
+  // Cloudflare Pages project "news360-tn" = the public address news360-tn.pages.dev (news360.pages.dev belongs to someone else) (deployed by .github/workflows/deploy.yml)
+  "name": "news360-tn",
   "pages_build_output_dir": ".",
   "compatibility_date": "2026-10-01",
   // the Astro worker "www" (root wrangler.jsonc) - called directly, no public round trip

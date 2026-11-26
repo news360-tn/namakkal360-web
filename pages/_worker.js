@@ -1,7 +1,7 @@
 /**
- * News360 public address: news360.pages.dev  (Cloudflare Pages, free plan).
+ * News360 public address: news360-tn.pages.dev  (Cloudflare Pages, free plan).
  * owner 26 Nov: the website itself is the Astro worker "www" (database, pages, news API). This small Pages site only puts the
- * news360.pages.dev address in front of it - every request goes to that worker unchanged and the answer comes straight back.
+ * news360-tn.pages.dev address in front of it - every request goes to that worker unchanged and the answer comes straight back.
  * It keeps no data and no secrets. The link to the worker is a "service binding" (WWW, see wrangler.jsonc next to this file);
  * if the binding is missing it uses the worker's own public address.
  */

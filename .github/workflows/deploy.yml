@@ -1,6 +1,6 @@
 name: deploy
 # owner 26 Nov: the website goes live from GitHub (free): tests -> build -> database migration -> the "www" worker -> the
-# news360.pages.dev address. Needs two repository secrets (Settings > Secrets and variables > Actions):
+# news360-tn.pages.dev address. Needs two repository secrets (Settings > Secrets and variables > Actions):
 #   CLOUDFLARE_API_TOKEN   (permissions: Workers Scripts Edit, D1 Edit, Cloudflare Pages Edit - Account level)
 #   CLOUDFLARE_ACCOUNT_ID
 # Cloudflare free plan only: nothing here is paid.
@@ -42,9 +42,19 @@ jobs:
       - name: Website worker (www)
         if: steps.cf.outputs.ready == 'yes'
         run: npx wrangler deploy
-      - name: Public address (news360.pages.dev)
+      - name: Public address (news360-tn.pages.dev)
         if: steps.cf.outputs.ready == 'yes'
         run: |
-          cd pages
-          ../node_modules/.bin/wrangler pages project create news360 --production-branch main 2>/dev/null || true
-          ../node_modules/.bin/wrangler pages deploy . --project-name news360 --branch main --commit-dirty=true
+          # deployed from a clean copy outside the repository: the build leaves .wrangler/deploy/config.json behind, which makes
+          # wrangler stop with "found both wrangler.jsonc and .wrangler/deploy/config.json"
+          WR="$GITHUB_WORKSPACE/node_modules/.bin/wrangler"
+          rm -rf "$RUNNER_TEMP/pagesdeploy" && cp -r pages "$RUNNER_TEMP/pagesdeploy" && cd "$RUNNER_TEMP/pagesdeploy"
+          "$WR" pages project create news360-tn --production-branch main 2>/dev/null || true
+          "$WR" pages deploy . --project-name news360-tn --branch main --commit-dirty=true
+      - name: Public address answers?
+        if: steps.cf.outputs.ready == 'yes'
+        run: |
+          code=000
+          for i in 1 2 3 4 5 6; do code=$(curl -s -o /dev/null -w "%{http_code}" https://news360-tn.pages.dev/ || true); [ "$code" = 200 ] && break; sleep 10; done
+          echo "https://news360-tn.pages.dev/ answered $code"
+          [ "$code" = 200 ] || { echo "::error::news360-tn.pages.dev did not answer 200 - open Cloudflare > Workers & Pages > news360-tn and check its domain (it may carry a suffix if the name was taken)"; exit 1; }
