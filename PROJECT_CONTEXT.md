@@ -61,6 +61,7 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 <!-- recent-changes:start (updated automatically by .github/workflows/context.yml - do not edit by hand) -->
 | Date | Commit | Change |
 |---|---|---|
+| 2026-11-26 | `57643c2` | Website: big lead story on top of each list, More news under each story |
 | 2026-11-26 | `c760bf6` | Website keeps its own copy of each story's pictures (the pipeline's picture links are deleted after 24 hours); a missing picture shows the news-type icon |
 | 2026-11-26 | `5e43096` | Pages deploy: clean-folder deploy, project news360-tn (news360 name is taken), check that the address answers |
 | 2026-11-26 | `d9f32c6` | deploy workflow: skip with a notice (not a red failure) until the Cloudflare secrets are added |
