@@ -12,6 +12,8 @@ export interface News {
   fb_url?: string; yt_url?: string;
   /** owner 26 Nov: the kind of news from the source comment ("crime", "death+not_guilty" ...) - the site shows the same safe line */
   safe_kind?: string;
+  /** pictures of this story stored on the website itself (/img/<id>/<n>) */
+  thumbs?: number;
   power_from: number | null; power_to: number | null;
 }
 export interface Filter { district?: string; taluk?: string; place?: string; type?: string; date?: string; q?: string; page?: number }
@@ -50,7 +52,7 @@ export function whereOf(f: Filter, now = Date.now()): { sql: string; args: (stri
   return { sql: w.length ? "WHERE " + w.join(" AND ") : "", args: a };
 }
 
-const parse = (r: any): News => ({ ...r, facts: JSON.parse(r.facts || "[]"), images: JSON.parse(r.images || "[]"), fb_url: r.fb_url ?? "", yt_url: r.yt_url ?? "", safe_kind: r.safe_kind ?? "" });
+const parse = (r: any): News => ({ ...r, facts: JSON.parse(r.facts || "[]"), images: JSON.parse(r.images || "[]"), fb_url: r.fb_url ?? "", yt_url: r.yt_url ?? "", safe_kind: r.safe_kind ?? "", thumbs: Number(r.thumbs ?? 0) });
 
 export async function list(db: D1Database, f: Filter): Promise<{ items: News[]; total: number }> {
   const { sql, args } = whereOf(f);
@@ -171,3 +173,29 @@ export function sourceName(url: string, lang: "ta" | "en"): string {
   const hit = SOURCES.find(([re]) => re.test(host));
   return hit ? (lang === "ta" ? hit[1] : hit[2]) : host;
 }
+
+/** owner 26 Nov: small copies of a story's pictures kept on the website (the pipeline's picture links are deleted after 24 hours).
+ *  Each is a base64 WebP/JPEG; at most 3 per story, 150 KB each. Never throws for a bad picture - it is skipped. */
+export const THUMB_OK = /^[A-Za-z0-9+/]+={0,2}$/;
+export const MAX_THUMBS = 3, MAX_THUMB_CHARS = 200_000;
+export interface ThumbUpdate { id: string; thumbs?: string[] }
+export async function saveThumbs(db: D1Database, items: ThumbUpdate[]): Promise<{ saved: string[]; skipped: { id: string; why: string }[] }> {
+  const saved: string[] = [], skipped: { id: string; why: string }[] = [];
+  for (const it of items) {
+    const id = String(it?.id ?? "");
+    if (!/^([A-Z]{2,4}-)?[A-Z]{1,4}-\d{1,7}$/.test(id)) { skipped.push({ id: id.slice(0, 30), why: "bad id" }); continue; }
+    const pics = (Array.isArray(it.thumbs) ? it.thumbs : []).filter((b) => typeof b === "string" && b.length > 100 && b.length <= MAX_THUMB_CHARS && THUMB_OK.test(b)).slice(0, MAX_THUMBS);
+    if (!pics.length) { skipped.push({ id, why: "no valid picture" }); continue; }
+    const exists = await db.prepare("SELECT 1 AS x FROM news WHERE id = ?").bind(id).first();
+    if (!exists) { skipped.push({ id, why: "story not on the site yet" }); continue; }
+    await db.batch([
+      db.prepare("DELETE FROM news_thumb WHERE id = ?").bind(id),
+      ...pics.map((b, n) => db.prepare("INSERT INTO news_thumb (id, n, b64) VALUES (?,?,?)").bind(id, n, b)),
+      db.prepare("UPDATE news SET thumbs = ? WHERE id = ?").bind(pics.length, id)]);
+    saved.push(id);
+  }
+  return { saved, skipped };
+}
+/** the picture to show: the website's own copy when it has one, else the pipeline's link (which may be gone after 24 hours) */
+export const picOf = (n: { id: string; images: string[]; thumbs?: number }, i = 0) =>
+  (n.thumbs ?? 0) > i ? `/img/${encodeURIComponent(n.id)}/${i}` : n.images[i] ?? "";

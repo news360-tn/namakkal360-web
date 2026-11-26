@@ -6,8 +6,8 @@ import { langOf, tr } from "../../lib/i18n";
 import { get } from "../../lib/news";
 import { typeOf } from "../../lib/types";
 import { talukOf, districtOf } from "../../lib/geo";
-import { icon, placeName, title, when, links, PLATFORM, platformSvg, sketchImg } from "../../lib/card";
-import { sourceName } from "../../lib/news";
+import { icon, placeName, title, when, links, PLATFORM, platformSvg, sketchImg, picTile } from "../../lib/card";
+import { sourceName, picOf } from "../../lib/news";
 import { safeLine, CORRECTION } from "../../lib/safe";
 import { siteOrigin } from "../../lib/site";
 import { paragraphs } from "../../lib/text";
@@ -23,13 +23,15 @@ const origin = siteOrigin(Astro.url);
 const shareUrl = new URL(`/news/${n.id}`, origin).href;
 const paper = sourceName(n.source_url, lang);
 const plat = links(n);
+const pics = n.images.map((_, i) => picOf(n, i));
+const absPics = pics.map((u) => (u.startsWith("/") ? new URL(u, origin).href : u));
 const newsDay = new Date(n.day + "T00:00:00").toLocaleDateString(lang === "ta" ? "ta-IN" : "en-IN", { day: "numeric", month: "long", year: "numeric" });
 const back = lang === "en" ? `/${d.id}?lang=en` : `/${d.id}`;
 const para = paragraphs(body);
 const published = `${n.day}T${n.time || "00:00"}:00+05:30`;
 const article = {
   "@context": "https://schema.org", "@type": "NewsArticle", headline: title(n, lang).slice(0, 110), description: body.slice(0, 200),
-  image: n.images.length ? n.images : [new URL("/logo-512.png", origin).href], datePublished: published, dateModified: published,
+  image: absPics.length ? absPics : [new URL("/logo-512.png", origin).href], datePublished: published, dateModified: published,
   inLanguage: lang === "ta" || !n.body_en ? "ta" : "en", articleSection: t[lang], mainEntityOfPage: shareUrl,
   contentLocation: { "@type": "Place", name: `${place}, ${d.en} district, Tamil Nadu` },
   author: { "@type": "Organization", name: brand, url: `${origin}/${d.id}` },
@@ -42,15 +44,13 @@ const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", it
   ...(tk ? [{ "@type": "ListItem", position: 3, name: tk[lang], item: `${origin}/${d.id}?taluk=${tk.id}` }] : []),
   { "@type": "ListItem", position: tk ? 4 : 3, name: title(n, lang).slice(0, 80) }] };
 ---
-<Base lang={lang} title={title(n, lang)} description={body.slice(0, 160)} image={n.images[0]} path={`/news/${n.id}`} type="article" noindex={lang === "en" && !n.body_en} jsonld={[article, crumbs]} district={d.id}>
+<Base lang={lang} title={title(n, lang)} description={body.slice(0, 160)} image={absPics[0]} path={`/news/${n.id}`} type="article" noindex={lang === "en" && !n.body_en} jsonld={[article, crumbs]} district={d.id}>
   <article class="-mx-4 mb-5 overflow-hidden border-line bg-surface sm:mx-auto sm:my-6 sm:max-w-[760px] sm:rounded-xl sm:border">
     <figure class="relative aspect-video overflow-hidden border-b border-line bg-white">
-      {n.images[0]
-        ? <Fragment set:html={sketchImg(n.images[0], title(n, lang), "size-full", false)} />
-        : <span class:list={["grid size-full place-items-center", t.text, t.soft]} set:html={icon(n.type, "size-14")} />}
+      <Fragment set:html={picTile(n, pics[0] ?? "", "size-full", false)} />
       {n.images[0] && <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-linear-to-t from-black/55 to-transparent px-3 pt-6 pb-2 text-[11.5px] font-medium text-white">
         <span>✏️ {tr(lang, "sketchNote")}</span>
-        <a href={n.images[0]} target="_blank" rel="noopener" class="shrink-0 rounded-md bg-white/90 px-2.5 py-2 font-semibold text-slate-900 hover:bg-white">📷 {tr(lang, "photo")}</a>
+        <a href={pics[0]} target="_blank" rel="noopener" class="shrink-0 rounded-md bg-white/90 px-2.5 py-2 font-semibold text-slate-900 hover:bg-white">📷 {tr(lang, "photo")}</a>
       </figcaption>}
     </figure>
     <div class="px-4 pt-4 pb-6 sm:p-7">
@@ -66,9 +66,9 @@ const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", it
         {para.rest.map((x) => <p>{x}</p>)}
       </div>
 
-      {n.images.length > 1 && (
+      {pics.length > 1 && (
         <div class="mt-5 grid grid-cols-2 gap-2">
-          {n.images.slice(1).map((src) => <a href={src} target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-line bg-white"><Fragment set:html={sketchImg(src, "", "aspect-video w-full")} /></a>)}
+          {pics.slice(1).map((src) => <a href={src} target="_blank" rel="noopener" class="block overflow-hidden rounded-lg border border-line bg-white"><Fragment set:html={sketchImg(src, "", "aspect-video w-full")} /></a>)}
         </div>
       )}
 

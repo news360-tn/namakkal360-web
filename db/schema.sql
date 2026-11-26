@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS news (
   source_url  TEXT NOT NULL DEFAULT '',
   fb_url      TEXT NOT NULL DEFAULT '',      -- the same news on Facebook (set by /api/links)
   yt_url      TEXT NOT NULL DEFAULT '',      -- the same news on YouTube Shorts (set by /api/links)
+  thumbs      INTEGER NOT NULL DEFAULT 0,    -- how many small copies of the story's pictures the website holds (table news_thumb)
   safe_kind   TEXT NOT NULL DEFAULT '',      -- kind of news from the source comment: the story shows the same safe line
   power_from  REAL,                         -- power-cut hours (24 h) when type = power
   power_to    REAL,
@@ -26,3 +27,10 @@ CREATE INDEX IF NOT EXISTS news_day   ON news(day DESC, time DESC);
 CREATE INDEX IF NOT EXISTS news_taluk ON news(taluk, day DESC);
 CREATE INDEX IF NOT EXISTS news_type  ON news(type, day DESC);
 CREATE INDEX IF NOT EXISTS news_district ON news(district, day DESC, time DESC);
+
+CREATE TABLE IF NOT EXISTS news_thumb (
+  id  TEXT    NOT NULL,
+  n   INTEGER NOT NULL,
+  b64 TEXT    NOT NULL,      -- the picture (small WebP/JPEG), base64
+  PRIMARY KEY (id, n)
+);

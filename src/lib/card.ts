@@ -4,7 +4,7 @@ import { esc } from "./text";
 import { typeOf } from "./types";
 import { placeOf, talukOf, districtOf } from "./geo";
 import { tr, type Lang } from "./i18n";
-import { istDay, sourceName } from "./news";
+import { istDay, sourceName, picOf } from "./news";
 
 export const ICON: Record<string, string> = {
   power: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', collector: '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
@@ -61,14 +61,18 @@ export function sourceHtml(n: News, lang: Lang, cls = ""): string {
 
 /** the news photo as a pencil sketch (the #sketch filter in Base.astro) on a paper-white tile */
 export const sketchImg = (src: string, alt: string, cls: string, lazy = true) =>
-  `<img src="${esc(src)}" alt="${esc(alt)}" ${lazy ? 'loading="lazy" decoding="async"' : ""} class="${cls} bg-white object-cover [filter:url(#sketch)]">`;
+  `<img src="${esc(src)}" alt="${esc(alt)}" ${lazy ? 'loading="lazy" decoding="async"' : ""} onerror="this.style.display='none'" class="${cls} relative bg-white object-cover [filter:url(#sketch)]">`;
+
+/** the type icon tile behind a picture: it shows when the picture is missing or cannot load */
+export const picTile = (n: News, img: string, imgCls: string, lazy = true) => {
+  const t = typeOf(n.type);
+  return `<span class="relative block size-full"><span aria-hidden="true" class="absolute inset-0 grid place-items-center ${t.text} ${t.soft}">${icon(n.type)}</span>${img ? sketchImg(img, "", imgCls, lazy) : ""}</span>`;
+};
 
 /** one news card. The headline is the card's link (it covers the card); source and platform links sit above it. */
 export function cardHtml(n: News, lang: Lang, withDistrict = false): string {
-  const t = typeOf(n.type), img = n.images[0];
-  const pic = img
-    ? sketchImg(img, "", "size-full transition duration-500 group-hover:scale-[1.03]")
-    : `<span class="grid size-full place-items-center ${t.text} ${t.soft}">${icon(n.type)}</span>`;
+  const t = typeOf(n.type), img = picOf(n, 0);
+  const pic = picTile(n, img, "size-full transition duration-500 group-hover:scale-[1.03]");
   const plat = links(n).map(([k, u]) =>
     `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="${PLATFORM[k].name}" title="${PLATFORM[k].name}" class="relative z-10 grid size-9 place-items-center rounded-full border border-line bg-surface ${PLATFORM[k].cls} transition hover:border-current active:scale-95">${platformSvg(k)}</a>`).join("");
   return `<article class="group relative flex animate-rise flex-col overflow-hidden rounded-xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-16px_rgba(14,22,33,.35)] max-sm:flex-row">

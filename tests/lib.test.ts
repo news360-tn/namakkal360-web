@@ -255,3 +255,29 @@ describe("saving news before the database update", () => {
     await expect(upsert(bad, toRow({ story_id: "RN-8", headline_ta: "x" } as any))).rejects.toThrow("disk full");
   });
 });
+
+describe("the website keeps its own pictures", () => {
+  it("picOf uses the website's copy when it has one, else the pipeline's link", async () => {
+    const { picOf } = await import("../src/lib/news");
+    expect(picOf({ id: "CBE-RN-1", images: ["https://r2/a.jpg", "https://r2/b.jpg"], thumbs: 1 }, 0)).toBe("/img/CBE-RN-1/0");
+    expect(picOf({ id: "CBE-RN-1", images: ["https://r2/a.jpg", "https://r2/b.jpg"], thumbs: 1 }, 1)).toBe("https://r2/b.jpg");
+    expect(picOf({ id: "RN-2", images: ["https://r2/a.jpg"] }, 0)).toBe("https://r2/a.jpg");
+    expect(picOf({ id: "RN-2", images: [] }, 0)).toBe("");
+  });
+  it("a card with a stored copy points at /img and has a fallback icon behind the picture", () => {
+    const n = { ...toRow({ story_id: "RN-3", headline_ta: "x", images: ["https://r2/a.jpg"] } as any), thumbs: 1 };
+    const html = card(n, "ta");
+    expect(html).toContain('src="/img/RN-3/0"'); expect(html).toContain("onerror="); expect(html).not.toContain("https://r2/a.jpg");
+  });
+  it("saveThumbs stores only valid pictures (max 3) and only for stories on the site", async () => {
+    const { saveThumbs } = await import("../src/lib/news");
+    const stmts: string[] = []; let have = true;
+    const db = { prepare: (sql: string) => ({ bind: (...a: any[]) => ({ first: async () => (have ? { x: 1 } : null), _sql: sql, _a: a }) }), batch: async (l: any[]) => { l.forEach((s) => stmts.push(s._sql)); } } as any;
+    const good = "A".repeat(400);
+    const r = await saveThumbs(db, [{ id: "CBE-RN-1", thumbs: [good, good, good, good, "bad!!", "A"] }, { id: "x y", thumbs: [good] }, { id: "CBE-RN-2", thumbs: ["short"] }]);
+    expect(r.saved).toEqual(["CBE-RN-1"]); expect(r.skipped.map((x) => x.why)).toEqual(["bad id", "no valid picture"]);
+    expect(stmts.filter((s) => /INSERT INTO news_thumb/.test(s)).length).toBe(3); expect(stmts.some((s) => /UPDATE news SET thumbs/.test(s))).toBe(true);
+    have = false;
+    expect((await saveThumbs(db, [{ id: "CBE-RN-9", thumbs: [good] }])).skipped[0].why).toBe("story not on the site yet");
+  });
+});
