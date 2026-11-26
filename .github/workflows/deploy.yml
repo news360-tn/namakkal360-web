@@ -21,19 +21,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Cloudflare secrets present?
+        id: cf
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::Add the repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (see the comment at the top of this file)"; exit 1; fi
+            echo "::warning::Deploy skipped - add the repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (see the top of this file), then run this workflow again"
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+          else echo "ready=yes" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/setup-node@v4
+        if: steps.cf.outputs.ready == 'yes'
         with: { node-version: "24", cache: npm }
       - run: npm ci --no-audit --no-fund
+        if: steps.cf.outputs.ready == 'yes'
       - run: npm test
+        if: steps.cf.outputs.ready == 'yes'
       - run: npm run build
+        if: steps.cf.outputs.ready == 'yes'
       - name: Database (adds only new columns/tables - never deletes news)
+        if: steps.cf.outputs.ready == 'yes'
         run: npx wrangler d1 migrations apply namakkal360 --remote
       - name: Website worker (www)
+        if: steps.cf.outputs.ready == 'yes'
         run: npx wrangler deploy
       - name: Public address (news360.pages.dev)
+        if: steps.cf.outputs.ready == 'yes'
         run: |
           cd pages
           ../node_modules/.bin/wrangler pages project create news360 --production-branch main 2>/dev/null || true
