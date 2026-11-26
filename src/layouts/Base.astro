@@ -4,7 +4,7 @@
 import "../styles/global.css";
 import { tr, type Lang } from "../lib/i18n";
 import { DISTRICTS, districtOf } from "../lib/geo";
-import { siteOrigin } from "../lib/site";
+import { siteOrigin, isDirectWorker } from "../lib/site";
 interface Props {
   lang: Lang; title?: string; description?: string; image?: string;
   /** address without the language (e.g. "/news/RN-140", "/?taluk=rasipuram"); the canonical and hreflang links are built from it */
@@ -16,7 +16,10 @@ const { lang, title, description, image, path = "/", type = "website", noindex =
 const d = districtOf(district);
 const brand = d ? (lang === "ta" ? d.short_ta : d.short_en) : tr(lang, "hubBrand");
 const home = d ? `/${d.id}` : "/";
-const pageTitle = title ? `${title} - ${brand} 360` : `${brand} 360 - ${d ? tr(lang, "tagline") : tr(lang, "hubTagline")}`;
+const withBrand = title ? `${title} - ${brand} 360` : "";
+// a long headline keeps its whole title (search results cut a title at about 60-70 characters, so the brand suffix would be cut anyway)
+const pageTitle = title ? (withBrand.length > 75 ? title : withBrand) : `${brand} 360 - ${d ? tr(lang, "tagline") : tr(lang, "hubTagline")}`;
+const hideFromSearch = noindex || isDirectWorker(Astro.request);      // owner 26 Nov: the workers.dev duplicate is never indexed
 const desc = description ?? (d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout"));
 const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ? "en" : "ta");
 const origin = siteOrigin(Astro.url);
@@ -43,7 +46,7 @@ const iconBtn = "grid size-10 max-sm:size-9 place-items-center rounded-lg border
   <link rel="alternate" hreflang="ta" href={withLang("ta")} />
   <link rel="alternate" hreflang="en" href={withLang("en")} />
   <link rel="alternate" hreflang="x-default" href={withLang("ta")} />
-  <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large"} />
+  <meta name="robots" content={hideFromSearch ? "noindex, follow" : "index, follow, max-image-preview:large"} />
   <meta property="og:site_name" content={`${brand} 360`} />
   <meta property="og:type" content={type} />
   <meta property="og:url" content={canonical} />

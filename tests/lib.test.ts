@@ -300,3 +300,12 @@ describe("news-site layout: lead story and more news", () => {
     expect(args[0]).toBe("salem"); expect(args[1]).toBe(n.id); expect(args[5]).toBe(3);
   });
 });
+
+describe("SEO: the workers.dev duplicate is not indexed", () => {
+  it("a direct workers.dev request is flagged, one through the public address is not", async () => {
+    const { isDirectWorker } = await import("../src/lib/site");
+    expect(isDirectWorker(new Request("https://www.namakkal360.workers.dev/namakkal"))).toBe(true);
+    expect(isDirectWorker(new Request("https://www.namakkal360.workers.dev/namakkal", { headers: { "x-forwarded-host": "news360-tn.pages.dev" } }))).toBe(false);
+    expect(isDirectWorker(new Request("https://news360-tn.pages.dev/namakkal"))).toBe(false);
+  });
+});
