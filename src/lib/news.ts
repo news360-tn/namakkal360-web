@@ -116,14 +116,22 @@ export function toRow(s: Incoming): News {
 }
 
 export async function upsert(db: D1Database, n: News): Promise<void> {
-  await db.prepare(`INSERT INTO news (id, district, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to, safe_kind, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
-    ON CONFLICT(id) DO UPDATE SET district=excluded.district, day=excluded.day, time=excluded.time, taluk=excluded.taluk, place=excluded.place, type=excluded.type,
+  const base = [n.id, n.district, n.day, n.time, n.taluk, n.place, n.type, n.title_ta, n.title_en, n.body_ta, n.body_en,
+    JSON.stringify(n.facts), JSON.stringify(n.images), n.reel_url, n.source_url, n.power_from, n.power_to];
+  const cols = `id, district, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to`;
+  const upd = `district=excluded.district, day=excluded.day, time=excluded.time, taluk=excluded.taluk, place=excluded.place, type=excluded.type,
       title_ta=excluded.title_ta, title_en=excluded.title_en, body_ta=excluded.body_ta, body_en=excluded.body_en, facts=excluded.facts,
-      images=excluded.images, reel_url=excluded.reel_url, source_url=excluded.source_url, power_from=excluded.power_from,
-      power_to=excluded.power_to, safe_kind=CASE WHEN excluded.safe_kind <> '' THEN excluded.safe_kind ELSE news.safe_kind END, updated_at=datetime('now')`)
-    .bind(n.id, n.district, n.day, n.time, n.taluk, n.place, n.type, n.title_ta, n.title_en, n.body_ta, n.body_en,
-      JSON.stringify(n.facts), JSON.stringify(n.images), n.reel_url, n.source_url, n.power_from, n.power_to, n.safe_kind ?? "").run();
+      images=excluded.images, reel_url=excluded.reel_url, source_url=excluded.source_url, power_from=excluded.power_from, power_to=excluded.power_to`;
+  try {
+    await db.prepare(`INSERT INTO news (${cols}, safe_kind, updated_at) VALUES (${"?,".repeat(18)}datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET ${upd}, safe_kind=CASE WHEN excluded.safe_kind <> '' THEN excluded.safe_kind ELSE news.safe_kind END, updated_at=datetime('now')`)
+      .bind(...base, n.safe_kind ?? "").run();
+  } catch (e) {
+    // the database update (migration 0002) is not applied yet: still save the news, without the new column - never lose a story
+    if (!/safe_kind/.test(String((e as Error)?.message ?? e))) throw e;
+    await db.prepare(`INSERT INTO news (${cols}, updated_at) VALUES (${"?,".repeat(17)}datetime('now'))
+      ON CONFLICT(id) DO UPDATE SET ${upd}, updated_at=datetime('now')`).bind(...base).run();
+  }
 }
 
 /** owner 26 Nov: a story's Facebook / YouTube link. Only links of these two shapes are kept. */

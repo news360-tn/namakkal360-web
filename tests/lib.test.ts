@@ -243,3 +243,15 @@ describe("pencil sketch pictures (no AI images)", () => {
     expect(card({ ...withImg, images: [] }, "ta")).not.toContain("#sketch");
   });
 });
+
+describe("saving news before the database update", () => {
+  it("falls back to saving without safe_kind when that column does not exist yet", async () => {
+    const sqls: string[] = [];
+    const db = { prepare: (sql: string) => ({ bind: (..._a: any[]) => ({ run: async () => { sqls.push(sql); if (/safe_kind/.test(sql)) throw new Error("D1_ERROR: table news has no column named safe_kind"); return {}; } }) }) } as any;
+    const { upsert } = await import("../src/lib/news");
+    await upsert(db, toRow({ story_id: "RN-8", headline_ta: "x" } as any));
+    expect(sqls.length).toBe(2); expect(sqls[1]).not.toMatch(/safe_kind/);
+    const bad = { prepare: () => ({ bind: () => ({ run: async () => { throw new Error("disk full"); } }) }) } as any;
+    await expect(upsert(bad, toRow({ story_id: "RN-8", headline_ta: "x" } as any))).rejects.toThrow("disk full");
+  });
+});
