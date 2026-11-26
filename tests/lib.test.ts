@@ -281,3 +281,22 @@ describe("the website keeps its own pictures", () => {
     expect((await saveThumbs(db, [{ id: "CBE-RN-9", thumbs: [good] }])).skipped[0].why).toBe("story not on the site yet");
   });
 });
+
+describe("news-site layout: lead story and more news", () => {
+  it("the lead story is a wide card with a summary, the headline link covers it, and it labels itself", async () => {
+    const { leadHtml } = await import("../src/lib/card");
+    const n = toRow({ story_id: "RN-7", headline_ta: "முக்கிய தலைப்பு", reel_script: "முதல் வரி. இரண்டாம் வரி. மூன்றாம் வரி.", source: "https://www.dinamani.com/x", images: ["https://r2/a.jpg"] } as any);
+    const html = leadHtml(n, "ta");
+    expect(html).toContain("col-span-full"); expect(html).toContain("முக்கிய செய்தி"); expect(html).toContain("முதல் வரி"); expect(html).toContain("/news/RN-7");
+    expect(html).toContain("Dinamani".length ? "தினமணி" : ""); expect(leadHtml(n, "en")).toContain("Top story");
+  });
+  it("related() asks for the same district, never the story itself, same town first", async () => {
+    const { related } = await import("../src/lib/news");
+    let sql = "", args: any[] = [];
+    const db = { prepare: (q: string) => ({ bind: (...a: any[]) => ({ all: async () => { sql = q; args = a; return { results: [] }; } }) }) } as any;
+    const n = toRow({ story_id: "RN-8", headline_ta: "x", district: "salem", category: "Crime" } as any);
+    await related(db, n, 3);
+    expect(sql).toMatch(/district = \?/); expect(sql).toMatch(/id <> \?/); expect(sql).toMatch(/\(taluk = \?\) DESC/);
+    expect(args[0]).toBe("salem"); expect(args[1]).toBe(n.id); expect(args[5]).toBe(3);
+  });
+});

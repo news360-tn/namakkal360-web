@@ -3,10 +3,10 @@
 import { env } from "cloudflare:workers";
 import Base from "../../layouts/Base.astro";
 import { langOf, tr } from "../../lib/i18n";
-import { get } from "../../lib/news";
+import { get, related } from "../../lib/news";
 import { typeOf } from "../../lib/types";
 import { talukOf, districtOf } from "../../lib/geo";
-import { icon, placeName, title, when, links, PLATFORM, platformSvg, sketchImg, picTile } from "../../lib/card";
+import { cardHtml, icon, placeName, title, when, links, PLATFORM, platformSvg, sketchImg, picTile } from "../../lib/card";
 import { sourceName, picOf } from "../../lib/news";
 import { safeLine, CORRECTION } from "../../lib/safe";
 import { siteOrigin } from "../../lib/site";
@@ -15,6 +15,7 @@ import { paragraphs } from "../../lib/text";
 const lang = langOf(Astro.url.searchParams.get("lang") ?? Astro.cookies.get("lang")?.value);
 const n = await get((env as any).DB as D1Database, Astro.params.id ?? "");
 if (!n) return new Response("Not found", { status: 404 });
+const more = await related((env as any).DB as D1Database, n, 3).catch(() => []);
 const t = typeOf(n.type), tk = talukOf(n.taluk), d = districtOf(n.district || "namakkal")!;
 const dName = lang === "ta" ? d.ta : d.en, brand = `${d.short_en} 360`;
 const pn = placeName(n, lang), place = tk && pn !== tk[lang] ? `${pn}, ${tk[lang]}` : pn;
@@ -108,4 +109,12 @@ const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", it
       </aside>
     </div>
   </article>
+  {more.length > 0 && (
+    <section aria-label={tr(lang, "more")} class="mx-auto mb-4 sm:max-w-[760px] lg:max-w-none">
+      <h2 class="mt-2 mb-3 font-head text-lg font-bold">{tr(lang, "more")}</h2>
+      <div class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-2.5">
+        <Fragment set:html={more.map((x) => cardHtml(x, lang)).join("")} />
+      </div>
+    </section>
+  )}
 </Base>

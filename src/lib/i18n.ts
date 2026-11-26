@@ -1,7 +1,7 @@
 /** Tamil first, English one tap away. Every interface word lives here. */
 export type Lang = "ta" | "en";
 const T = {
-  ta: { readOriginal: "மூலச் செய்தியைப் படிக்க", watchOn: "இந்தச் செய்தியைப் பார்க்க", photo: "அசல் படம்", sketchNote: "படம்: செய்தியின் அசல் படம், பென்சில் ஓவியமாக", aboutNews: "இந்தச் செய்தி பற்றி", newsDate: "செய்தி தேதி", followUs: "எங்களைப் பின்தொடர", noSource: "மூல இணைப்பு இல்லை", sourceNote: "ஒவ்வொரு செய்தியும் அதன் மூலச் செய்தியின் பெயர், இணைப்புடன்.",
+  ta: { lead: "முக்கிய செய்தி", readOriginal: "மூலச் செய்தியைப் படிக்க", watchOn: "இந்தச் செய்தியைப் பார்க்க", photo: "அசல் படம்", sketchNote: "படம்: செய்தியின் அசல் படம், பென்சில் ஓவியமாக", aboutNews: "இந்தச் செய்தி பற்றி", newsDate: "செய்தி தேதி", followUs: "எங்களைப் பின்தொடர", noSource: "மூல இணைப்பு இல்லை", sourceNote: "ஒவ்வொரு செய்தியும் அதன் மூலச் செய்தியின் பெயர், இணைப்புடன்.",
         brand: "நாமக்கல்", tagline: "நம்ம ஊரு அப்டேட்", search: "செய்தி அல்லது ஊர் தேடுங்கள்", all: "அனைத்தும்", allOf: "முழு",
         district: "நாமக்கல் மாவட்டம்", distSub: "8 தாலுகாக்கள் · அனைத்து ஊர் செய்திகள்", latest: "சமீபத்திய செய்திகள்", stories: "செய்திகள்",
         showAll: "அனைத்தும் காட்டு", empty: "இந்தத் தேர்வில் செய்தி இல்லை.", anyDay: "எல்லா நாளும்", today: "இன்று", yesterday: "நேற்று",
@@ -12,7 +12,7 @@ const T = {
         hubSub: "நாமக்கல், கோவை, சேலம், ஈரோடு, கரூர், திருப்பூர், திருச்சி - ஒவ்வொரு தாலுகா, ஒவ்வொரு ஊரின் செய்திகளும் தமிழிலும் ஆங்கிலத்திலும்.",
         allDistricts: "அனைத்து மாவட்டங்கள்", districtWord: "மாவட்டம்", districtNews: "மாவட்டச் செய்திகள்", taluks: "தாலுகாக்கள்", everyTown: "அனைத்து ஊர் செய்திகள்",
         aboutOne: "மாவட்டத்தின் அனைத்து ஊர் செய்திகளும் - தமிழிலும் ஆங்கிலத்திலும்.", hubAbout: "நாமக்கல், கோவை, சேலம், ஈரோடு, கரூர், திருப்பூர், திருச்சி மாவட்ட ஊர் செய்திகள் - தமிழிலும் ஆங்கிலத்திலும்." },
-  en: { readOriginal: "Read the original report", watchOn: "Watch this news on", photo: "Original photo", sketchNote: "Picture: the news photo as a pencil sketch", aboutNews: "About this news", newsDate: "News date", followUs: "Follow us", noSource: "No source link", sourceNote: "Every story names its original source with a link.",
+  en: { lead: "Top story", readOriginal: "Read the original report", watchOn: "Watch this news on", photo: "Original photo", sketchNote: "Picture: the news photo as a pencil sketch", aboutNews: "About this news", newsDate: "News date", followUs: "Follow us", noSource: "No source link", sourceNote: "Every story names its original source with a link.",
         brand: "Namakkal", tagline: "Our town, updated", search: "Search news or town", all: "All", allOf: "All of",
         district: "Namakkal District", distSub: "8 taluks · news from every town", latest: "Latest news", stories: "stories",
         showAll: "Show all", empty: "No news for this choice.", anyDay: "Any day", today: "Today", yesterday: "Yesterday",

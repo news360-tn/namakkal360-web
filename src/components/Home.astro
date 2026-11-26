@@ -8,7 +8,7 @@ import { langOf, tr } from "../lib/i18n";
 import { DISTRICTS, districtOf, talukOf, placeOf } from "../lib/geo";
 import { TYPES, typeOf } from "../lib/types";
 import { sanitize, list, powerAlerts, districtStats, PAGE, type Filter } from "../lib/news";
-import { cardHtml, alertHtml, when, title as titleOf } from "../lib/card";
+import { cardHtml, leadHtml, alertHtml, when, title as titleOf } from "../lib/card";
 import { siteOrigin } from "../lib/site";
 
 interface Props { district?: string }
@@ -180,7 +180,7 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
   <Fragment set:html={alerts.map((n) => alertHtml(n, lang, hub)).join("")} />
 
   <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-2.5">
-    <Fragment set:html={rest.map((n) => cardHtml(n, lang, hub)).join("")} />
+    <Fragment set:html={rest.map((n, i) => (i === 0 && pg === 1 && !f.q ? leadHtml(n, lang, hub) : cardHtml(n, lang, hub))).join("")} />
   </section>
   {!items.length && !alerts.length && <p class="rounded-xl border border-dashed border-line bg-surface py-10 text-center text-mute">{tr(lang, "empty")}</p>}
   {pages > 1 && (

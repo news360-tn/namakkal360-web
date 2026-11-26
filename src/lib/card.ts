@@ -1,6 +1,6 @@
 /** News card + power-cut alert markup (Tailwind classes only). Shared by the server page and the browser (infinite scroll). */
 import type { News } from "./news";
-import { esc } from "./text";
+import { esc, paragraphs } from "./text";
 import { typeOf } from "./types";
 import { placeOf, talukOf, districtOf } from "./geo";
 import { tr, type Lang } from "./i18n";
@@ -97,4 +97,25 @@ export function alertHtml(n: News, lang: Lang, withDistrict = false): string {
     <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-wait-bg text-t-power">${icon("power", "size-6")}</span>
     <span class="min-w-0 flex-1"><span class="block truncate text-[12.5px] font-semibold text-mute"><b class="text-t-power">${esc(tr(lang, "power"))}</b> · ${esc(where(n, lang, withDistrict))} · ${esc(when(n, lang))}</span>
       <span class="block font-head text-base leading-snug font-semibold">${esc(title(n, lang))}</span>${bar}</span></a>`;
+}
+
+/** owner 26 Nov (news-site pattern: one big lead story on top): the newest story as a wide card with a short summary */
+export function leadHtml(n: News, lang: Lang, withDistrict = false): string {
+  const t = typeOf(n.type), img = picOf(n, 0);
+  const body = (lang === "en" && n.body_en) || n.body_ta;
+  const p = paragraphs(body), full = [p.lead, ...p.rest].join(" "), sum = full.length > 230 ? full.slice(0, 230).replace(/\s+\S*$/, "") + "…" : full;
+  const plat = links(n).map(([k, u]) =>
+    `<a href="${esc(u)}" target="_blank" rel="noopener" aria-label="${PLATFORM[k].name}" title="${PLATFORM[k].name}" class="relative z-10 grid size-10 place-items-center rounded-full border border-line bg-surface ${PLATFORM[k].cls} transition hover:border-current active:scale-95">${platformSvg(k, "size-5")}</a>`).join("");
+  return `<article class="group relative col-span-full grid animate-rise overflow-hidden rounded-xl border border-line bg-surface transition hover:shadow-[0_12px_32px_-16px_rgba(14,22,33,.35)] md:grid-cols-[1.25fr_1fr]">
+    <div class="aspect-video w-full overflow-hidden border-b border-line bg-white md:aspect-auto md:min-h-[260px] md:border-r md:border-b-0">${picTile(n, img, "size-full transition duration-500 group-hover:scale-[1.02]", false)}</div>
+    <div class="flex min-w-0 flex-col gap-2.5 p-5 max-sm:p-4">
+      <p class="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap text-mute"><span class="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold tracking-wide text-accent-ink uppercase">${esc(tr(lang, "lead"))}</span><span class="size-2 shrink-0 rounded-full ${t.bg}"></span><b class="${t.text}">${esc(t[lang])}</b><span class="truncate">· ${esc(where(n, lang, withDistrict))}</span></p>
+      <h2 class="font-head text-[clamp(21px,2.6vw,29px)] leading-tight font-bold text-balance text-ink"><a href="${href(n, lang)}" class="after:absolute after:inset-0 hover:text-accent">${esc(title(n, lang))}</a></h2>
+      <p class="line-clamp-4 text-[15px] leading-relaxed text-mute">${esc(sum)}</p>
+      ${sourceHtml(n, lang)}
+      <div class="mt-auto flex items-center justify-between gap-2 pt-1.5">
+        <span class="text-[13px] font-medium text-mute">${esc(when(n, lang))}</span>
+        ${plat ? `<span class="flex gap-2">${plat}</span>` : ""}
+      </div>
+    </div></article>`;
 }

@@ -174,6 +174,13 @@ export function sourceName(url: string, lang: "ta" | "en"): string {
   return hit ? (lang === "ta" ? hit[1] : hit[2]) : host;
 }
 
+/** owner 26 Nov: "More news" under a story - same town first, then the same kind of news in the district (newest first) */
+export async function related(db: D1Database, n: News, limit = 3): Promise<News[]> {
+  const rows = await db.prepare(`SELECT * FROM news WHERE district = ? AND id <> ? AND (taluk = ? OR type = ?)
+    ORDER BY (taluk = ?) DESC, day DESC, time DESC LIMIT ?`).bind(n.district, n.id, n.taluk, n.type, n.taluk, limit).all();
+  return (rows.results ?? []).map(parse);
+}
+
 /** owner 26 Nov: small copies of a story's pictures kept on the website (the pipeline's picture links are deleted after 24 hours).
  *  Each is a base64 WebP/JPEG; at most 3 per story, 150 KB each. Never throws for a bad picture - it is skipped. */
 export const THUMB_OK = /^[A-Za-z0-9+/]+={0,2}$/;
