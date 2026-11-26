@@ -1,0 +1,8 @@
+{
+  // Cloudflare Pages project "news360" = the public address news360.pages.dev (deployed by .github/workflows/deploy.yml)
+  "name": "news360",
+  "pages_build_output_dir": ".",
+  "compatibility_date": "2026-10-01",
+  // the Astro worker "www" (root wrangler.jsonc) - called directly, no public round trip
+  "services": [{ "binding": "WWW", "service": "www" }]
+}

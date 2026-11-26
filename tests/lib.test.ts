@@ -160,3 +160,86 @@ describe("one site for all 7 districts", () => {
     expect(cardHtml(r, "ta", true)).toContain("/news/TRY-RN-5");
   });
 });
+
+// ---- 26 Nov: news360.pages.dev redesign - links, source, safe note, pencil sketch ----
+import { sourceName, FB_LINK, YT_LINK, setLinks } from "../src/lib/news";
+import { safeLine } from "../src/lib/safe";
+import { links, sourceHtml, cardHtml as card } from "../src/lib/card";
+
+describe("source shown clearly", () => {
+  it("names the paper in Tamil and English, or falls back to the site name", () => {
+    expect(sourceName("https://www.dailythanthi.com/news/x", "ta")).toBe("தினத்தந்தி");
+    expect(sourceName("https://www.dailythanthi.com/news/x", "en")).toBe("Daily Thanthi");
+    expect(sourceName("https://tamil.news18.com/a", "en")).toBe("News18 Tamil");
+    expect(sourceName("https://www.smallpaper.in/a", "en")).toBe("smallpaper.in");
+    expect(sourceName("", "ta")).toBe("");
+    expect(sourceName("not a link", "en")).toBe("");
+  });
+  it("every card with a source shows 'Source: paper' linked to the report; a card without one shows nothing", () => {
+    const n = { ...toRow({ story_id: "RN-1", headline_ta: "செய்தி", source: "https://www.dinamalar.com/a" } as any) };
+    const html = sourceHtml(n, "en");
+    expect(html).toContain("Source:"); expect(html).toContain("Dinamalar"); expect(html).toContain('href="https://www.dinamalar.com/a"'); expect(html).toContain('rel="noopener nofollow"');
+    expect(sourceHtml({ ...n, source_url: "" }, "ta")).toBe("");
+  });
+});
+
+describe("Instagram / Facebook / YouTube links", () => {
+  const n = toRow({ story_id: "RN-2", headline_ta: "செய்தி", reel_link: "https://www.instagram.com/reel/AbC_1-2/" } as any);
+  it("only the real links are shown, in the same order", () => {
+    expect(links(n).map(([k]) => k)).toEqual(["ig"]);
+    const all = { ...n, fb_url: "https://www.facebook.com/reel/123", yt_url: "https://youtube.com/shorts/abcDEF12345" };
+    expect(links(all).map(([k]) => k)).toEqual(["ig", "fb", "yt"]);
+    const html = card(all, "en");
+    expect(html).toContain("Instagram"); expect(html).toContain("Facebook"); expect(html).toContain("YouTube");
+    expect(card(n, "en")).not.toContain("Facebook");
+  });
+  it("accepts only Facebook and YouTube Shorts links", () => {
+    expect(FB_LINK.test("https://www.facebook.com/reel/123456")).toBe(true);
+    expect(FB_LINK.test("https://evil.com/facebook.com/x")).toBe(false);
+    expect(FB_LINK.test("javascript:alert(1)")).toBe(false);
+    expect(YT_LINK.test("https://youtube.com/shorts/abcDEF12345")).toBe(true);
+    expect(YT_LINK.test("https://www.youtube.com/shorts/abcDEF12345")).toBe(true);
+    expect(YT_LINK.test("https://youtube.com/watch?v=abc")).toBe(false);
+  });
+  it("setLinks changes only the two link columns and says what it skipped", async () => {
+    const calls: any[] = [];
+    const db = { prepare: (sql: string) => ({ bind: (...a: any[]) => ({ run: async () => { calls.push([sql, a]); return { meta: { changes: a[4] === "CBE-RN-1" ? 1 : 0 } }; } }) }) } as any;
+    const r = await setLinks(db, [
+      { id: "CBE-RN-1", fb_url: "https://www.facebook.com/reel/1", yt_url: "https://youtube.com/shorts/abcDEF12345" },
+      { id: "CBE-RN-2", fb_url: "https://www.facebook.com/reel/2" },
+      { id: "bad id!", fb_url: "https://www.facebook.com/reel/3" },
+      { id: "CBE-RN-3", fb_url: "https://evil.com/x" }]);
+    expect(r.saved).toEqual(["CBE-RN-1"]);
+    expect(r.skipped.map((x) => x.why)).toEqual(["story not on the site yet", "bad id", "no valid link"]);
+    expect(calls[0][0]).toMatch(/UPDATE news SET fb_url/); expect(calls[0][0]).not.toMatch(/title|source_url|reel_url/);
+  });
+});
+
+describe("safe note (the same lines as the social-media source comment)", () => {
+  it("each kind of news has its own Tamil and English line", () => {
+    expect(safeLine("crime", "crime", "ta")).toContain("குற்றம் சாட்டப்பட்டவர்கள் குற்றவாளிகள் அல்ல");
+    expect(safeLine("crime", "crime", "en")).toContain("not guilty until it is proved in court");
+    expect(safeLine("power_cut", "power", "en")).toContain("electricity");
+    expect(safeLine("death", "accident", "ta")).toContain("குடும்பத்தினரின் உணர்வுகளை");
+  });
+  it("a death with someone accused adds the not-guilty line", () => {
+    expect(safeLine("death+not_guilty", "accident", "en")).toMatch(/respect.*not guilty/);
+  });
+  it("an older story without a kind gets the line of its type", () => {
+    expect(safeLine("", "power", "en")).toContain("electricity");
+    expect(safeLine(undefined, "civic", "ta")).toContain("மக்களின் பிரச்சினைகள்");
+    expect(safeLine("zzz", "unknown", "en")).toContain("public information");
+  });
+  it("ingest keeps only a clean kind", () => {
+    expect(toRow({ story_id: "RN-3", headline_ta: "x", safe_kind: "death+not_guilty" } as any).safe_kind).toBe("death+not_guilty");
+    expect(toRow({ story_id: "RN-3", headline_ta: "x", safe_kind: "<script>" } as any).safe_kind).toBe("");
+  });
+});
+
+describe("pencil sketch pictures (no AI images)", () => {
+  it("every news photo uses the #sketch filter, the placeholder icon does not", () => {
+    const withImg = toRow({ story_id: "RN-4", headline_ta: "x", images: ["https://img.example/a.jpg"] } as any);
+    expect(card(withImg, "ta")).toContain("filter:url(#sketch)");
+    expect(card({ ...withImg, images: [] }, "ta")).not.toContain("#sketch");
+  });
+});

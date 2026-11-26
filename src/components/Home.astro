@@ -9,6 +9,7 @@ import { DISTRICTS, districtOf, talukOf, placeOf } from "../lib/geo";
 import { TYPES, typeOf } from "../lib/types";
 import { sanitize, list, powerAlerts, districtStats, PAGE, type Filter } from "../lib/news";
 import { cardHtml, alertHtml, when, title as titleOf } from "../lib/card";
+import { siteOrigin } from "../lib/site";
 
 interface Props { district?: string }
 const url = Astro.url, sp = url.searchParams;
@@ -44,12 +45,14 @@ function link(change: Partial<Record<keyof Filter | "pg", string | undefined>>) 
   const s = p.toString();
   return s ? `${home}?${s}` : home;
 }
-const chip = "inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13.5px] font-semibold backdrop-blur-md transition active:scale-95 max-sm:h-9 max-sm:px-3 max-sm:text-[13.5px]";
-const off = "border-black/10 bg-white/70 hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60";
-const on = "border-transparent bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40";
+const chip = "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13.5px] font-semibold transition active:scale-95";
+const off = "border-line bg-surface text-ink hover:border-mute";
+const on = "border-accent bg-accent text-accent-ink";
 const row = "flex flex-wrap gap-1.5 py-0.5";      // every taluk and type always visible (wraps to the next line, no hidden sideways scroll)
-const pill = "h-10 min-w-44 appearance-none rounded-full pr-10 border border-black/10 bg-white/80 px-4 text-[14px] font-semibold text-slate-900 backdrop-blur-md outline-none focus:border-brand-fresh dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100";
-const sel = "h-11 w-full appearance-none rounded-xl pr-10 border border-black/10 bg-white/80 px-3 text-[14.5px] font-semibold text-slate-900 backdrop-blur-md outline-none focus:border-brand-fresh dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-100";
+const pill = "h-10 min-w-44 appearance-none rounded-lg border border-line bg-surface pr-10 pl-3.5 text-[14px] font-semibold text-ink outline-none focus:border-accent";
+const sel = "h-11 w-full appearance-none rounded-lg border border-line bg-surface pr-10 pl-3 text-[14.5px] font-semibold text-ink outline-none focus:border-accent";
+const caret = '<svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+const pageBtn = "grid h-10 min-w-10 place-items-center rounded-lg border px-3 text-sm font-semibold transition active:scale-95";
 const dateOpts: [string, string][] = [["", tr(lang, "anyDay")], ["today", tr(lang, "today")], ["yesterday", tr(lang, "yesterday")], ["week", tr(lang, "week")]];
 /** page numbers: 1 … 4 5 6 … 20 */
 const nums: (number | "…")[] = [];
@@ -64,44 +67,53 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
   title={tk ? `${tk[lang]} ${tr(lang, "stories")}` : d ? `${dName} ${tr(lang, "districtNews")}` : undefined}
   description={tk ? `${tk[lang]}: ${tk.places.map((p) => p[lang]).join(", ")} - ${dName} ${tr(lang, "aboutOne")}`
     : d ? `${dName} ${tr(lang, "aboutOne")} ${taluks.map((t) => t[lang]).join(", ")}.` : undefined}
-  jsonld={[{ "@context": "https://schema.org", "@type": "WebSite", name: "News 360", url: Astro.url.origin + "/", inLanguage: ["ta", "en"] }]}>
-  {/* all-district home: one card per district, with today's count and its newest headline */}
+  jsonld={[{ "@context": "https://schema.org", "@type": "WebSite", name: "News 360", url: siteOrigin(Astro.url) + "/", inLanguage: ["ta", "en"] }]}>
+  {/* all-district home: one card per district (its own logo), with today's count and its newest headline */}
   {hub ? (<Fragment>
-    <section class="relative my-4 overflow-hidden rounded-[22px] bg-linear-to-br from-brand via-brand-fresh to-sky360 p-6 text-white shadow-[0_20px_50px_-20px_rgba(11,93,59,.55)] max-sm:my-3 max-sm:p-4">
-      <div aria-hidden="true" class="absolute -top-16 -right-10 size-56 rounded-full bg-sun/30 blur-3xl"></div>
-      <div aria-hidden="true" class="absolute -bottom-20 left-1/3 size-56 rounded-full bg-orange360/25 blur-3xl"></div>
-      <h1 class="relative bg-linear-to-r from-white to-amber-200 bg-clip-text text-[clamp(22px,4.4vw,40px)] leading-tight font-extrabold text-transparent">{tr(lang, "hubTitle")}</h1>
-      <p class="relative mt-1 max-w-[640px] text-[14.5px] font-semibold opacity-90 max-sm:text-[13px] max-sm:line-clamp-2">{tr(lang, "hubSub")}</p>
+    <section class="my-5 rounded-xl border border-line bg-surface p-6 max-sm:my-3 max-sm:p-4">
+      <p class="text-[12.5px] font-semibold tracking-wide text-accent uppercase">News 360</p>
+      <h1 class="mt-1 font-head text-[clamp(22px,4vw,34px)] leading-tight font-bold text-balance">{tr(lang, "hubTitle")}</h1>
+      <p class="mt-1.5 max-w-[680px] text-[14.5px] text-mute max-sm:text-[13.5px]">{tr(lang, "hubSub")}</p>
+      <p class="mt-3 inline-flex items-center gap-2 rounded-lg bg-raise px-3 py-2 text-[13px] font-medium text-mute">📰 {tr(lang, "sourceNote")}</p>
     </section>
     <nav aria-label="Districts" class="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-sm:grid-cols-2 max-sm:gap-2.5">
       {DISTRICTS.map((x) => { const st = stats[x.id]; return (
         <a href={lang === "en" ? `/${x.id}?lang=en` : `/${x.id}`} data-district={x.id}
-          class:list={["group relative flex min-h-[124px] flex-col overflow-hidden rounded-[18px] bg-linear-to-br p-4 text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-xl active:scale-[.97] max-sm:min-h-[112px] max-sm:p-3.5", x.art]}>
-          <span aria-hidden="true" class="absolute -right-6 -bottom-8 text-[84px] leading-none font-black text-white/15 transition group-hover:scale-110">360</span>
-          <b class="relative text-[19px] leading-tight font-extrabold max-sm:text-[17px]">{lang === "ta" ? x.short_ta : x.short_en} <span class="text-amber-200">360</span></b>
-          <span class="relative mt-0.5 text-[12.5px] font-semibold opacity-90">{x.taluks.length} {tr(lang, "taluks")}{st?.today ? ` · ${tr(lang, "today")} ${st.today}` : ""}</span>
-          {st?.latest && <span class="relative mt-auto line-clamp-2 pt-2 text-[12.5px] leading-snug font-semibold opacity-95">{titleOf(st.latest, lang)}</span>}
+          class="group flex min-h-[132px] flex-col gap-2 rounded-xl border border-line bg-surface p-4 transition hover:-translate-y-0.5 hover:border-accent active:scale-[.98] max-sm:min-h-[120px] max-sm:p-3">
+          <span class="flex items-center gap-2.5">
+            <img src={`/brand/${x.id}.webp`} alt="" width="40" height="40" loading="lazy" class="size-10 shrink-0 rounded-full border border-line max-sm:size-9" />
+            <span class="min-w-0 leading-tight">
+              <b class="block font-head text-[17px] leading-tight font-bold max-sm:text-[15.5px]">{lang === "ta" ? x.short_ta : x.short_en} <span class="text-accent">360</span></b>
+              <span class="block text-[12px] font-medium text-mute">{x.taluks.length} {tr(lang, "taluks")}</span>
+            </span>
+          </span>
+          {st?.today ? <span class="w-fit rounded-full bg-accent-soft px-2 py-0.5 text-[12px] font-semibold text-accent">{tr(lang, "today")} {st.today}</span> : null}
+          {st?.latest && <span class="mt-auto line-clamp-2 text-[13px] leading-snug font-medium text-ink/85 group-hover:text-ink">{titleOf(st.latest, lang)}</span>}
         </a>); })}
-      <a href="#latest" class="flex min-h-[124px] flex-col justify-center rounded-[18px] border border-black/10 bg-white/75 p-4 backdrop-blur-md transition hover:border-brand-fresh active:scale-[.97] max-sm:min-h-[112px] dark:border-white/10 dark:bg-slate-900/60">
-        <b class="text-[17px] font-extrabold">{tr(lang, "latest")} ↓</b>
-        <span class="text-[12.5px] font-semibold text-slate-500 dark:text-slate-400">{tr(lang, "allDistricts")}</span>
+      <a href="#latest" class="flex min-h-[132px] flex-col justify-center gap-1 rounded-xl border border-dashed border-line bg-raise p-4 transition hover:border-accent active:scale-[.98] max-sm:min-h-[120px]">
+        <b class="font-head text-[17px] font-bold">{tr(lang, "latest")} ↓</b>
+        <span class="text-[12.5px] font-medium text-mute">{tr(lang, "allDistricts")}</span>
       </a>
     </nav>
   </Fragment>) : (
-  <figure class="relative my-4 h-[180px] overflow-hidden rounded-[18px] shadow-[0_20px_50px_-20px_rgba(11,93,59,.45)] max-sm:h-[140px]">
-    {banner.img
-      ? <img src={banner.img} alt="" class="size-full object-cover object-[30%_40%]" />
-      : <div aria-hidden="true" class:list={["size-full bg-linear-to-br", d!.art]}><span class="absolute -right-4 -bottom-10 text-[150px] leading-none font-black text-white/15 max-sm:text-[110px]">360</span></div>}
-    <div class="absolute inset-0 bg-linear-to-r from-slate-950/75 via-brand/20 to-orange360/25"></div>
-    <figcaption class="absolute bottom-4 left-5 text-white">
-      <a href={lang === "en" ? "/?lang=en" : "/"} class="text-[12.5px] font-bold text-white/80 hover:text-white">← {tr(lang, "allDistricts")}</a>
-      <h1 class="bg-linear-to-r from-white to-amber-200 bg-clip-text text-[clamp(26px,4vw,36px)] leading-tight font-extrabold text-transparent">{tk ? tk[lang] : `${dName} ${tr(lang, "districtWord")}`}</h1>
-      <p class="text-sm font-semibold opacity-90 max-sm:line-clamp-1">{tk ? tk.places.map((p) => p[lang]).join(" · ") : `${taluks.length} ${tr(lang, "taluks")} · ${tr(lang, "everyTown")}`}</p>
-    </figcaption>
-    {banner.credit && banner.img && <small class="absolute right-2.5 bottom-2 text-[10px] text-white/70">📷 {banner.credit}</small>}
-    {tk && <button id="star" type="button" data-taluk={tk.id} data-on={tr(lang, "mine")} data-off={tr(lang, "setMine")}
-      class="absolute top-3 right-3 flex h-[34px] items-center rounded-full bg-white/90 px-3 text-[13px] font-bold text-ink transition active:scale-95 aria-pressed:bg-sun">☆ {tr(lang, "setMine")}</button>}
-  </figure>
+  <section class="my-5 grid overflow-hidden rounded-xl border border-line bg-surface sm:grid-cols-[1.1fr_1fr] max-sm:my-3">
+    <div class="flex flex-col gap-2 p-6 max-sm:order-2 max-sm:p-4">
+      <a href={lang === "en" ? "/?lang=en" : "/"} class="text-[13px] font-semibold text-accent hover:underline">← {tr(lang, "allDistricts")}</a>
+      <div class="flex items-center gap-3">
+        <img src={`/brand/${d!.id}.webp`} alt="" width="52" height="52" class="size-13 shrink-0 rounded-full border border-line max-sm:size-11" />
+        <h1 class="font-head text-[clamp(24px,3.6vw,34px)] leading-tight font-bold">{tk ? tk[lang] : `${dName} ${tr(lang, "districtWord")}`}</h1>
+      </div>
+      <p class="text-[14px] text-mute max-sm:line-clamp-2">{tk ? tk.places.map((p) => p[lang]).join(" · ") : `${taluks.length} ${tr(lang, "taluks")} · ${tr(lang, "everyTown")}`}</p>
+      {tk && <button id="star" type="button" data-taluk={tk.id} data-on={tr(lang, "mine")} data-off={tr(lang, "setMine")}
+        class="mt-1 flex h-9 w-fit items-center rounded-lg border border-line bg-raise px-3 text-[13px] font-semibold transition active:scale-95 aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent">☆ {tr(lang, "setMine")}</button>}
+    </div>
+    <figure class:list={["relative min-h-[170px] bg-white max-sm:order-1 max-sm:min-h-[130px] max-sm:border-b max-sm:border-line sm:border-l sm:border-line", !banner.img && "max-sm:hidden"]}>
+      {banner.img
+        ? <img src={banner.img} alt="" class="absolute inset-0 size-full bg-white object-cover object-[30%_40%] [filter:url(#sketch)]" />
+        : <span aria-hidden="true" class="absolute inset-0 grid place-items-center bg-raise"><img src={`/brand/${d!.id}.webp`} alt="" width="96" height="96" class="size-24 rounded-full opacity-80" /></span>}
+      {banner.credit && banner.img && <figcaption class="absolute right-2 bottom-1.5 rounded bg-white/85 px-1.5 text-[10px] text-slate-600">📷 {banner.credit}</figcaption>}
+    </figure>
+  </section>
   )}
 
   {d && <nav class:list={[row, "max-sm:hidden"]} aria-label="Area">
@@ -110,8 +122,8 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
   </nav>}
   {tk && (
     <nav class:list={[row, "mt-2 max-sm:hidden"]} aria-label="Town">
-      <a href={link({ place: undefined })} class:list={[chip, "h-8 text-[13.5px]", !f.place ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{tr(lang, "allOf")} {tk[lang]}</a>
-      {tk.places.map((p) => <a href={link({ place: p.id })} class:list={[chip, "h-8 text-[13.5px]", f.place === p.id ? "border-transparent bg-ink text-white dark:bg-white dark:text-ink" : "border-transparent bg-black/5 dark:bg-white/10"]}>{p[lang]}</a>)}
+      <a href={link({ place: undefined })} class:list={[chip, "h-8 text-[13.5px]", !f.place ? "border-ink bg-ink text-bg" : "border-transparent bg-raise text-ink hover:border-line"]}>{tr(lang, "allOf")} {tk[lang]}</a>
+      {tk.places.map((p) => <a href={link({ place: p.id })} class:list={[chip, "h-8 text-[13.5px]", f.place === p.id ? "border-ink bg-ink text-bg" : "border-transparent bg-raise text-ink hover:border-line"]}>{p[lang]}</a>)}
     </nav>
   )}
 
@@ -119,72 +131,71 @@ const canonicalPath = pg > 1 ? `${base}${base.includes("?") ? "&" : "?"}page=${p
   <form action={home} method="get" class:list={["grid grid-cols-2 gap-2 sm:hidden", hub && "mt-4"]}>
     {lang === "en" && <input type="hidden" name="lang" value="en" />}
     {f.q && <input type="hidden" name="q" value={f.q} />}
-    {d && <label class:list={["flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400", !tk && "col-span-2"]}>{tr(lang, "area")}
+    {d && <label class:list={["flex flex-col gap-1 text-[12px] font-semibold text-mute", !tk && "col-span-2"]}>{tr(lang, "area")}
       <span class="relative block w-full sm:w-auto"><select name="taluk" onchange="this.form.place && (this.form.place.value=''); this.form.submit()" class={sel}>
         <option value="">{tr(lang, "all")}</option>
         {taluks.map((t) => <option value={t.id} selected={f.taluk === t.id}>{t[lang]}</option>)}
-      </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>}
+      </select><Fragment set:html={caret} /></span></label>}
     {tk ? (
-      <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "town")}
+      <label class="flex flex-col gap-1 text-[12px] font-semibold text-mute">{tr(lang, "town")}
         <span class="relative block w-full sm:w-auto"><select name="place" onchange="this.form.submit()" class={sel}>
           <option value="">{tr(lang, "allOf")} {tk[lang]}</option>
           {tk.places.map((p) => <option value={p.id} selected={f.place === p.id}>{p[lang]}</option>)}
-        </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>
+        </select><Fragment set:html={caret} /></span></label>
     ) : null}
-    <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "kind")}
+    <label class="flex flex-col gap-1 text-[12px] font-semibold text-mute">{tr(lang, "kind")}
       <span class="relative block w-full sm:w-auto"><select name="type" onchange="this.form.submit()" class={sel}>
         <option value="">{tr(lang, "all")}</option>
         {TYPES.map((t) => <option value={t.id} selected={f.type === t.id}>{t[lang]}</option>)}
-      </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>
-    <label class="flex flex-col gap-1 text-[11.5px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "day")}
+      </select><Fragment set:html={caret} /></span></label>
+    <label class="flex flex-col gap-1 text-[12px] font-semibold text-mute">{tr(lang, "day")}
       <span class="relative block w-full sm:w-auto"><select name="date" onchange="this.form.submit()" class={sel}>
         {dateOpts.map(([v, l]) => <option value={v} selected={(f.date ?? "") === v}>{l}</option>)}
-      </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>
+      </select><Fragment set:html={caret} /></span></label>
   </form>
 
   <!-- desktop: type + date as two dropdowns (only the taluks are buttons) -->
   <form action={home} method="get" class="mt-3.5 mb-1.5 flex items-center gap-2.5 max-sm:hidden">
     {Object.entries({ taluk: f.taluk, place: f.place, q: f.q, lang: lang === "en" ? "en" : undefined }).filter(([, v]) => v).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-    <label class="flex items-center gap-2 text-[13px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "kind")}
+    <label class="flex items-center gap-2 text-[13px] font-semibold text-mute">{tr(lang, "kind")}
       <span class="relative block w-full sm:w-auto"><select name="type" onchange="this.form.submit()" class={pill}>
         <option value="">{tr(lang, "all")}</option>
         {TYPES.map((t) => <option value={t.id} selected={f.type === t.id}>{t[lang]}</option>)}
-      </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>
-    <label class="flex items-center gap-2 text-[13px] font-bold text-slate-500 dark:text-slate-400">{tr(lang, "day")}
+      </select><Fragment set:html={caret} /></span></label>
+    <label class="flex items-center gap-2 text-[13px] font-semibold text-mute">{tr(lang, "day")}
       <span class="relative block w-full sm:w-auto"><select name="date" onchange="this.form.submit()" class={pill}>
         {dateOpts.map(([v, l]) => <option value={v} selected={(f.date ?? "") === v}>{l}</option>)}
         {f.date && /^\d/.test(f.date) && <option value={f.date} selected>{f.date}</option>}
-      </select><svg aria-hidden="true" class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-brand-fresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></label>
+      </select><Fragment set:html={caret} /></span></label>
   </form>
 
-  <div id="latest" class="my-4 flex scroll-mt-20 items-baseline justify-between">
+  <div id="latest" class="mt-6 mb-3 flex scroll-mt-32 items-end justify-between gap-3">
     <div>
-      <h2 class="inline-block bg-linear-to-r from-brand-fresh via-sun to-red360 bg-clip-text text-xl font-extrabold text-transparent">{heading}</h2>
-      <span class="block text-[13px] font-semibold text-slate-500 dark:text-slate-400">{total} {tr(lang, "stories")}{pages > 1 && ` · ${tr(lang, "page")} ${pg} / ${pages}`}</span>
+      <h2 class="font-head text-xl font-bold">{heading}</h2>
+      <span class="block text-[13px] font-medium text-mute">{total} {tr(lang, "stories")}{pages > 1 && ` · ${tr(lang, "page")} ${pg} / ${pages}`}</span>
     </div>
-    {(f.taluk || f.type || f.date || f.q) && <a href={lang === "en" ? `${home}?lang=en` : home} class="text-[13px] font-bold text-red360">{tr(lang, "showAll")}</a>}
+    {(f.taluk || f.type || f.date || f.q) && <a href={lang === "en" ? `${home}?lang=en` : home} class="text-[13px] font-semibold text-accent hover:underline">{tr(lang, "showAll")}</a>}
   </div>
 
   <Fragment set:html={alerts.map((n) => alertHtml(n, lang, hub)).join("")} />
 
-  <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-3">
+  <section id="grid" class="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-2.5">
     <Fragment set:html={rest.map((n) => cardHtml(n, lang, hub)).join("")} />
   </section>
-  {!items.length && !alerts.length && <p class="py-10 text-center text-slate-500">{tr(lang, "empty")}</p>}
+  {!items.length && !alerts.length && <p class="rounded-xl border border-dashed border-line bg-surface py-10 text-center text-mute">{tr(lang, "empty")}</p>}
   {pages > 1 && (
-    <nav aria-label="Pages" class="mt-8 flex flex-wrap items-center justify-center gap-2">
-      {pg > 1 && <a href={link({ pg: String(pg - 1) })} rel="prev" class="grid h-10 place-items-center rounded-full border border-black/10 bg-white/75 px-4 text-sm font-bold backdrop-blur-md transition active:scale-95 dark:border-white/10 dark:bg-slate-900/60">‹ {tr(lang, "prev")}</a>}
+    <nav aria-label="Pages" class="mt-8 flex flex-wrap items-center justify-center gap-1.5">
+      {pg > 1 && <a href={link({ pg: String(pg - 1) })} rel="prev" class:list={[pageBtn, "border-line bg-surface hover:border-mute"]}>‹ {tr(lang, "prev")}</a>}
       {nums.map((x) => x === "…"
-        ? <span class="px-1 text-slate-400">…</span>
+        ? <span class="px-1 text-mute">…</span>
         : <a href={link({ pg: String(x) })} aria-current={x === pg ? "page" : undefined}
-            class:list={["grid size-10 place-items-center rounded-full text-sm font-bold transition active:scale-95",
-              x === pg ? "bg-linear-to-br from-brand-fresh to-sky360 text-white shadow-lg shadow-sky360/40" : "border border-black/10 bg-white/75 backdrop-blur-md hover:border-brand-fresh dark:border-white/10 dark:bg-slate-900/60"]}>{x}</a>)}
-      {pg < pages && <a href={link({ pg: String(pg + 1) })} rel="next" class="grid h-10 place-items-center rounded-full border border-black/10 bg-white/75 px-4 text-sm font-bold backdrop-blur-md transition active:scale-95 dark:border-white/10 dark:bg-slate-900/60">{tr(lang, "next")} ›</a>}
+            class:list={[pageBtn, x === pg ? "border-accent bg-accent text-accent-ink" : "border-line bg-surface hover:border-mute"]}>{x}</a>)}
+      {pg < pages && <a href={link({ pg: String(pg + 1) })} rel="next" class:list={[pageBtn, "border-line bg-surface hover:border-mute"]}>{tr(lang, "next")} ›</a>}
     </nav>
   )}
 
   <button id="toTop" type="button" aria-label="Back to top"
-    class="pointer-events-none fixed right-4 bottom-5 z-40 grid size-[46px] translate-y-2.5 place-items-center rounded-full bg-linear-to-br from-brand-fresh to-sky360 text-white opacity-0 shadow-lg transition data-[on]:pointer-events-auto data-[on]:translate-y-0 data-[on]:opacity-100">
+    class="pointer-events-none fixed right-4 bottom-5 z-40 grid size-[46px] translate-y-2.5 place-items-center rounded-full bg-accent text-accent-ink opacity-0 shadow-lg transition data-[on]:pointer-events-auto data-[on]:translate-y-0 data-[on]:opacity-100">
     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
   </button>
 </Base>

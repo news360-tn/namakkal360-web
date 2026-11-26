@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS news (
   images      TEXT NOT NULL DEFAULT '[]',  -- JSON [url] - the story's own pictures
   reel_url    TEXT NOT NULL DEFAULT '',
   source_url  TEXT NOT NULL DEFAULT '',
+  fb_url      TEXT NOT NULL DEFAULT '',      -- the same news on Facebook (set by /api/links)
+  yt_url      TEXT NOT NULL DEFAULT '',      -- the same news on YouTube Shorts (set by /api/links)
+  safe_kind   TEXT NOT NULL DEFAULT '',      -- kind of news from the source comment: the story shows the same safe line
   power_from  REAL,                         -- power-cut hours (24 h) when type = power
   power_to    REAL,
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))

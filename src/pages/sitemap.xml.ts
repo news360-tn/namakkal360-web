@@ -1,5 +1,6 @@
 /** sitemap.xml: home, the 7 district pages, every taluk page and every story, each with its Tamil and English address */
 import type { APIRoute } from "astro";
+import { siteOrigin } from "../lib/site";
 import { env } from "cloudflare:workers";
 import { DISTRICTS } from "../lib/geo";
 
@@ -10,7 +11,7 @@ function entry(loc: string, lastmod?: string) {
     + `<xhtml:link rel="alternate" hreflang="ta" href="${x(loc)}"/><xhtml:link rel="alternate" hreflang="en" href="${x(en)}"/></url>`;
 }
 export const GET: APIRoute = async ({ url }) => {
-  const o = url.origin;
+  const o = siteOrigin(url);
   const rows = await ((env as any).DB as D1Database).prepare("SELECT id, day, updated_at FROM news ORDER BY day DESC, time DESC LIMIT 45000").all<{ id: string; day: string; updated_at: string }>();
   const body = [entry(`${o}/`), ...DISTRICTS.flatMap((d) => [entry(`${o}/${d.id}`), ...d.taluks.map((t) => entry(`${o}/${d.id}?taluk=${t.id}`))]),
     ...(rows.results ?? []).map((r) => entry(`${o}/news/${encodeURIComponent(r.id)}`, (r.updated_at || r.day).slice(0, 10)))].join("");

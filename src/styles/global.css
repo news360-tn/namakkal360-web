@@ -1,41 +1,78 @@
 /* Tailwind CSS only: this file holds the Tailwind setup and the design tokens (no hand-written style rules).
-   All styling is done with Tailwind utility classes in the components. */
+   owner 26 Nov: the same design system as the News360 Backend - calm slate surfaces, one indigo accent, the platform colours
+   (checked for colour-blind readers in light and dark), Space Grotesk headings, Inter text, Anek Tamil for Tamil. */
 @import "tailwindcss";
 
 /* dark mode follows the toggle (data-theme on <html>), set from the phone setting on first visit */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
-  --font-sans: "Anek Tamil", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Anek Tamil", ui-sans-serif, system-ui, sans-serif;
+  --font-head: "Space Grotesk", "Anek Tamil", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* brand (from the logo) */
-  --color-brand: #0b5d3b;
-  --color-brand-fresh: #16a34a;
-  --color-sun: #facc15;
-  --color-orange360: #f97316;
-  --color-red360: #ef4444;
-  --color-sky360: #0ea5e9;
-  --color-ink: #0b1220;
+  /* surfaces + text (light; the dark values are below) */
+  --color-bg: #edf0f5;
+  --color-surface: #ffffff;
+  --color-raise: #f5f7fa;
+  --color-ink: #0e1621;
+  --color-mute: #586478;
+  --color-line: #dce2eb;
+  --color-accent: #2f45d8;
+  --color-accent-soft: #e7eafd;
+  --color-accent-ink: #ffffff;
+  --color-good: #0f7a4f;
+  --color-good-bg: #dcf5e9;
+  --color-wait: #8a5a00;
+  --color-wait-bg: #fdf1d6;
+
+  /* the three platforms */
+  --color-ig: #c2185b;
+  --color-fb: #1877f2;
+  --color-yt: #e8590c;
+  --color-wa: #128c3e;
 
   /* news types */
-  --color-t-power: #f97316;
-  --color-t-collector: #16a34a;
-  --color-t-accident: #ef4444;
-  --color-t-crime: #8b5cf6;
-  --color-t-rain: #0ea5e9;
-  --color-t-civic: #14b8a6;
-  --color-t-edu: #3b82f6;
-  --color-t-event: #ec4899;
-  --color-t-business: #ca8a04;
+  --color-t-power: #c2410c;
+  --color-t-collector: #15803d;
+  --color-t-accident: #b91c1c;
+  --color-t-crime: #7c3aed;
+  --color-t-rain: #0369a1;
+  --color-t-civic: #0f766e;
+  --color-t-edu: #1d4ed8;
+  --color-t-event: #be185d;
+  --color-t-business: #a16207;
 
-  /* slow smoke drift */
-  --animate-drift-1: drift-1 38s ease-in-out infinite alternate;
-  --animate-drift-2: drift-2 46s ease-in-out infinite alternate;
-  --animate-drift-3: drift-3 52s ease-in-out infinite alternate;
-  --animate-rise: rise .45s ease both;
+  --animate-rise: rise .35s ease both;
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
 
-  @keyframes drift-1 { to { transform: translate(8vmax, 6vmax) rotate(25deg) scale(1.15); } }
-  @keyframes drift-2 { to { transform: translate(-10vmax, 8vmax) rotate(-30deg) scale(1.1); } }
-  @keyframes drift-3 { to { transform: translate(6vmax, -10vmax) rotate(20deg) scale(1.2); } }
-  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+/* dark tokens (the same names, so no component needs dark: classes for colours) */
+[data-theme=dark] {
+  --color-bg: #0b1016;
+  --color-surface: #131a23;
+  --color-raise: #18212c;
+  --color-ink: #e8edf4;
+  --color-mute: #95a2b5;
+  --color-line: #243040;
+  --color-accent: #8b9bff;
+  --color-accent-soft: #1d2452;
+  --color-accent-ink: #0b1016;
+  --color-good: #5fd3a0;
+  --color-good-bg: #12301f;
+  --color-wait: #f2c46d;
+  --color-wait-bg: #33280f;
+  --color-ig: #e0407f;
+  --color-fb: #4c93f5;
+  --color-yt: #e8793a;
+  --color-wa: #3ccf6e;
+  --color-t-power: #fb923c;
+  --color-t-collector: #4ade80;
+  --color-t-accident: #f87171;
+  --color-t-crime: #a78bfa;
+  --color-t-rain: #38bdf8;
+  --color-t-civic: #2dd4bf;
+  --color-t-edu: #60a5fa;
+  --color-t-event: #f472b6;
+  --color-t-business: #facc15;
+  color-scheme: dark;
 }

@@ -8,6 +8,10 @@ export interface News {
   id: string; district: string; day: string; time: string; taluk: string; place: string; type: string;
   title_ta: string; title_en: string; body_ta: string; body_en: string;
   facts: { label: string; value: string }[]; images: string[]; reel_url: string; source_url: string;
+  /** owner 26 Nov: the same news on Facebook and YouTube (added later by the link sync, never by ingest) */
+  fb_url?: string; yt_url?: string;
+  /** owner 26 Nov: the kind of news from the source comment ("crime", "death+not_guilty" ...) - the site shows the same safe line */
+  safe_kind?: string;
   power_from: number | null; power_to: number | null;
 }
 export interface Filter { district?: string; taluk?: string; place?: string; type?: string; date?: string; q?: string; page?: number }
@@ -46,7 +50,7 @@ export function whereOf(f: Filter, now = Date.now()): { sql: string; args: (stri
   return { sql: w.length ? "WHERE " + w.join(" AND ") : "", args: a };
 }
 
-const parse = (r: any): News => ({ ...r, facts: JSON.parse(r.facts || "[]"), images: JSON.parse(r.images || "[]") });
+const parse = (r: any): News => ({ ...r, facts: JSON.parse(r.facts || "[]"), images: JSON.parse(r.images || "[]"), fb_url: r.fb_url ?? "", yt_url: r.yt_url ?? "", safe_kind: r.safe_kind ?? "" });
 
 export async function list(db: D1Database, f: Filter): Promise<{ items: News[]; total: number }> {
   const { sql, args } = whereOf(f);
@@ -90,6 +94,7 @@ export async function districtStats(db: D1Database, now = Date.now()): Promise<R
 export interface Incoming {
   story_id: string; headline_ta: string; headline_en?: string; reel_script?: string; story_en?: string; caption?: string;
   district?: string; location?: string; category?: string; images?: string[]; reel_link?: string; source?: string; published?: string; filed_at?: string;
+  safe_kind?: string;
 }
 export function toRow(s: Incoming): News {
   const title_ta = clean(s.headline_ta), body_ta = dropOutro(s.reel_script ?? "");
@@ -106,16 +111,55 @@ export function toRow(s: Incoming): News {
     facts: factsFromCaption(s.caption ?? ""), images: (s.images ?? []).filter((u) => /^https:\/\//.test(u)).slice(0, 6),
     reel_url: reel, source_url: /^https?:\/\//.test(s.source ?? "") ? s.source! : "",
     power_from: hours?.[0] ?? null, power_to: hours?.[1] ?? null,
+    safe_kind: /^[a-z_]{2,20}(\+not_guilty)?$/.test(s.safe_kind ?? "") ? s.safe_kind! : "",
   };
 }
 
 export async function upsert(db: D1Database, n: News): Promise<void> {
-  await db.prepare(`INSERT INTO news (id, district, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
+  await db.prepare(`INSERT INTO news (id, district, day, time, taluk, place, type, title_ta, title_en, body_ta, body_en, facts, images, reel_url, source_url, power_from, power_to, safe_kind, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))
     ON CONFLICT(id) DO UPDATE SET district=excluded.district, day=excluded.day, time=excluded.time, taluk=excluded.taluk, place=excluded.place, type=excluded.type,
       title_ta=excluded.title_ta, title_en=excluded.title_en, body_ta=excluded.body_ta, body_en=excluded.body_en, facts=excluded.facts,
       images=excluded.images, reel_url=excluded.reel_url, source_url=excluded.source_url, power_from=excluded.power_from,
-      power_to=excluded.power_to, updated_at=datetime('now')`)
+      power_to=excluded.power_to, safe_kind=CASE WHEN excluded.safe_kind <> '' THEN excluded.safe_kind ELSE news.safe_kind END, updated_at=datetime('now')`)
     .bind(n.id, n.district, n.day, n.time, n.taluk, n.place, n.type, n.title_ta, n.title_en, n.body_ta, n.body_en,
-      JSON.stringify(n.facts), JSON.stringify(n.images), n.reel_url, n.source_url, n.power_from, n.power_to).run();
+      JSON.stringify(n.facts), JSON.stringify(n.images), n.reel_url, n.source_url, n.power_from, n.power_to, n.safe_kind ?? "").run();
+}
+
+/** owner 26 Nov: a story's Facebook / YouTube link. Only links of these two shapes are kept. */
+export const FB_LINK = /^https:\/\/(www\.|m\.)?facebook\.com\/[\w./?=&%-]{3,300}$/;
+export const YT_LINK = /^https:\/\/(www\.)?youtube\.com\/shorts\/[\w-]{6,20}$/;
+export interface LinkUpdate { id: string; fb_url?: string; yt_url?: string }
+/** only the two link columns change - a story sent again by the pipeline never removes them */
+export async function setLinks(db: D1Database, items: LinkUpdate[]): Promise<{ saved: string[]; skipped: { id: string; why: string }[] }> {
+  const saved: string[] = [], skipped: { id: string; why: string }[] = [];
+  for (const it of items) {
+    const id = String(it?.id ?? "");
+    if (!/^([A-Z]{2,4}-)?[A-Z]{1,4}-\d{1,7}$/.test(id)) { skipped.push({ id: id.slice(0, 30), why: "bad id" }); continue; }
+    const fb = it.fb_url && FB_LINK.test(it.fb_url) ? it.fb_url : "", yt = it.yt_url && YT_LINK.test(it.yt_url) ? it.yt_url : "";
+    if (!fb && !yt) { skipped.push({ id, why: "no valid link" }); continue; }
+    const r = await db.prepare("UPDATE news SET fb_url = CASE WHEN ? <> '' THEN ? ELSE fb_url END, yt_url = CASE WHEN ? <> '' THEN ? ELSE yt_url END WHERE id = ?")
+      .bind(fb, fb, yt, yt, id).run();
+    if ((r.meta?.changes ?? 0) > 0) saved.push(id); else skipped.push({ id, why: "story not on the site yet" });
+  }
+  return { saved, skipped };
+}
+
+/** owner 26 Nov: the source shown clearly - newspaper name in Tamil / English from the article's address */
+const SOURCES: [RegExp, string, string][] = [
+  [/dinamalar\.com/, "தினமலர்", "Dinamalar"], [/dailythanthi\.com/, "தினத்தந்தி", "Daily Thanthi"], [/maalaimalar\.com/, "மாலைமலர்", "Maalaimalar"],
+  [/dinakaran\.com/, "தினகரன்", "Dinakaran"], [/dinamani\.com/, "தினமணி", "Dinamani"], [/hindutamil\.in/, "இந்து தமிழ்", "Hindu Tamil"],
+  [/thehindu\.com/, "தி இந்து", "The Hindu"], [/vikatan\.com/, "விகடன்", "Vikatan"], [/polimernews\.com/, "பாலிமர் நியூஸ்", "Polimer News"],
+  [/news18\.com/, "நியூஸ்18 தமிழ்", "News18 Tamil"], [/abplive\.com/, "ஏபிபி நாடு", "ABP Nadu"], [/puthiyathalaimurai\.com/, "புதிய தலைமுறை", "Puthiya Thalaimurai"],
+  [/thanthitv\.com/, "தந்தி டிவி", "Thanthi TV"], [/indianexpress\.com/, "இந்தியன் எக்ஸ்பிரஸ் தமிழ்", "Indian Express Tamil"],
+  [/samayam\.com|indiatimes\.com/, "சமயம் தமிழ்", "Samayam Tamil"], [/oneindia\.com/, "ஒன்இந்தியா தமிழ்", "Oneindia Tamil"],
+  [/kalaimalar\.com/, "கலைமலர்", "Kalaimalar"], [/covaimail\.com/, "கோவை மெயில்", "Covai Mail"], [/dtnext\.in/, "டிடி நெக்ஸ்ட்", "DT Next"],
+  [/tn\.gov\.in|nic\.in/, "அரசு அறிவிப்பு", "Government notice"],
+];
+export function sourceName(url: string, lang: "ta" | "en"): string {
+  if (!url) return "";
+  let host = "";
+  try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+  const hit = SOURCES.find(([re]) => re.test(host));
+  return hit ? (lang === "ta" ? hit[1] : hit[2]) : host;
 }

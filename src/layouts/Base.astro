@@ -1,8 +1,10 @@
 ---
-/* Page frame: header, footer, Namakkal Fort background, drifting smoke. Tailwind classes only. */
+/* Page frame (owner 26 Nov: the News360 Backend design for every reader): white header with the 360 logo, district menu with
+   each page's own logo, search, language + theme, the pencil-sketch filter used on every news picture, footer. Tailwind only. */
 import "../styles/global.css";
 import { tr, type Lang } from "../lib/i18n";
 import { DISTRICTS, districtOf } from "../lib/geo";
+import { siteOrigin } from "../lib/site";
 interface Props {
   lang: Lang; title?: string; description?: string; image?: string;
   /** address without the language (e.g. "/news/RN-140", "/?taluk=rasipuram"); the canonical and hreflang links are built from it */
@@ -17,14 +19,17 @@ const home = d ? `/${d.id}` : "/";
 const pageTitle = title ? `${title} - ${brand} 360` : `${brand} 360 - ${d ? tr(lang, "tagline") : tr(lang, "hubTagline")}`;
 const desc = description ?? (d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout"));
 const other = new URL(Astro.url); other.searchParams.set("lang", lang === "ta" ? "en" : "ta");
-const origin = Astro.url.origin;
+const origin = siteOrigin(Astro.url);
 const withLang = (l: Lang) => { const u = new URL(path, origin); if (l === "en") u.searchParams.set("lang", "en"); return u.href; };
 const canonical = withLang(lang);
 const ogImage = image ?? new URL("/logo-512.png", origin).href;
+const logo = `/brand/${d ? d.id : "360"}.webp`;
 const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization", name: "News 360", alternateName: "Namakkal 360",
   url: origin + "/", logo: { "@type": "ImageObject", url: new URL("/logo-512.png", origin).href, width: 512, height: 512 },
   sameAs: ["https://www.instagram.com/namakkal.360/"],
   areaServed: ["Namakkal", "Coimbatore", "Salem", "Erode", "Karur", "Tirupur", "Tiruchirappalli"].map((n) => ({ "@type": "AdministrativeArea", name: `${n} district, Tamil Nadu, India` })) };
+const tl = (p: string) => (lang === "en" ? `${p}?lang=en` : p);
+const iconBtn = "grid size-10 place-items-center rounded-lg border border-line bg-surface text-ink transition hover:border-mute active:scale-95";
 ---
 <!doctype html>
 <html lang={lang} class="scroll-smooth">
@@ -33,7 +38,7 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>{pageTitle}</title>
   <meta name="description" content={desc} />
-  <meta name="theme-color" content="#0b5d3b" />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="canonical" href={canonical} />
   <link rel="alternate" hreflang="ta" href={withLang("ta")} />
   <link rel="alternate" hreflang="en" href={withLang("en")} />
@@ -56,69 +61,89 @@ const site = { "@context": "https://schema.org", "@type": "NewsMediaOrganization
   <link rel="icon" href="/logo-96.png" />
   <link rel="apple-touch-icon" href="/logo-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <script is:inline>
     // theme before first paint: saved choice, else the phone setting
     try { const t = localStorage.getItem("n360t") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); document.documentElement.dataset.theme = t; } catch (e) {}
   </script>
 </head>
-<body class="relative isolate flex min-h-screen flex-col bg-stone-50 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
-  <!-- Namakkal Fort, very light, like a shadow -->
-  <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-20 bg-[url(/places/namakkal-fort.webp)] bg-cover bg-[center_35%] opacity-10 blur-[1px] grayscale-[.35] dark:opacity-[.07] dark:brightness-75"></div>
-  <!-- drifting smoke in the logo colours -->
-  <div aria-hidden="true" class="pointer-events-none fixed -inset-[10%] -z-10 overflow-hidden">
-    <i class="absolute -top-[8vmax] -left-[12vmax] h-[42vmax] w-[60vmax] animate-drift-1 rounded-full bg-[radial-gradient(closest-side,#22c55e,transparent)] opacity-60 blur-[70px] motion-reduce:animate-none"></i>
-    <i class="absolute top-[18vh] -right-[14vmax] h-[36vmax] w-[48vmax] animate-drift-2 rounded-full bg-[radial-gradient(closest-side,#facc15,transparent)] opacity-60 blur-[70px] motion-reduce:animate-none"></i>
-    <i class="absolute -bottom-[18vmax] left-[20vw] h-[40vmax] w-[52vmax] animate-drift-3 rounded-full bg-[radial-gradient(closest-side,#38bdf8,transparent)] opacity-45 blur-[70px] motion-reduce:animate-none"></i>
-    <i class="absolute right-[12vw] bottom-[8vh] h-[24vmax] w-[30vmax] animate-drift-1 rounded-full bg-[radial-gradient(closest-side,#f97316,transparent)] opacity-40 blur-[70px] motion-reduce:animate-none"></i>
-    <i class="absolute top-[30vh] left-[45vw] h-[26vmax] w-[34vmax] animate-drift-2 rounded-full bg-[radial-gradient(closest-side,#ec4899,transparent)] opacity-20 blur-[80px] motion-reduce:animate-none"></i>
-  </div>
+<body class="flex min-h-screen flex-col bg-bg font-sans text-[15px] leading-normal text-ink antialiased [font-variant-numeric:tabular-nums]">
+  <!-- owner 26 Nov: no AI pictures - every news photo is drawn as a pencil sketch in the browser (free, nothing stored) -->
+  <svg aria-hidden="true" width="0" height="0" class="absolute">
+    <filter id="sketch" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+      <feColorMatrix type="saturate" values="0" result="gray" />
+      <feComponentTransfer in="gray" result="inv"><feFuncR type="table" tableValues="1 0" /><feFuncG type="table" tableValues="1 0" /><feFuncB type="table" tableValues="1 0" /></feComponentTransfer>
+      <feGaussianBlur in="inv" stdDeviation="2.2" result="soft" />
+      <feBlend in="soft" in2="gray" mode="color-dodge" result="pencil" />
+      <feComponentTransfer in="pencil"><feFuncR type="gamma" exponent="2.1" /><feFuncG type="gamma" exponent="2.1" /><feFuncB type="gamma" exponent="2.1" /></feComponentTransfer>
+    </filter>
+  </svg>
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-3 focus:py-2 focus:text-accent-ink">Skip to news</a>
 
-  <header class="sticky top-0 z-30 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white shadow-[0_6px_24px_-10px_rgba(11,93,59,.55)]">
-    <div class="mx-auto flex h-[62px] max-w-[1120px] items-center gap-2.5 px-4">
-      <a href={lang === "en" ? `${home}?lang=en` : home} class="mr-auto flex items-center gap-2.5">
-        {d?.id === "namakkal"
-          ? <img src="/logo-96.png" alt="" width="40" height="40" class="size-10 rounded-full ring-2 ring-white/90" />
-          : <span aria-hidden="true" class:list={["grid size-10 place-items-center rounded-full bg-linear-to-br text-[12px] font-black tracking-tight text-white ring-2 ring-white/90", d ? d.art : "from-sun via-orange360 to-red360"]}>360</span>}
-        <b class="text-[19px] font-extrabold tracking-tight whitespace-nowrap max-[380px]:text-[17px]">{brand} <span class="bg-linear-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">360</span></b>
+  <header class="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-[1180px] items-center gap-2 px-4">
+      <a href={tl(home)} class="mr-auto flex min-w-0 items-center gap-2.5">
+        <img src={logo} alt="" width="40" height="40" class="size-10 shrink-0 rounded-full border border-line" />
+        <span class="min-w-0 leading-tight">
+          <b class="block truncate font-head text-[19px] font-bold tracking-tight max-[380px]:text-[17px]">{brand} <span class="text-accent">360</span></b>
+          <span class="block truncate text-[12px] font-medium text-mute max-sm:hidden">{d ? tr(lang, "tagline") : tr(lang, "hubTagline")}</span>
+        </span>
       </a>
-      <button id="searchBtn" type="button" aria-label="Search" class="grid size-[38px] place-items-center rounded-full bg-white/20 transition active:scale-95">
-        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+      <button id="searchBtn" type="button" aria-label="Search" aria-expanded="false" aria-controls="searchBar" class={iconBtn}>
+        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
       </button>
-      <a href={other.pathname + other.search} id="langLink" data-lang={lang === "ta" ? "en" : "ta"} class="flex rounded-full bg-white/20 p-[3px] text-[13px] font-bold">
-        <span class:list={["rounded-full px-3 py-[5px]", lang === "ta" ? "bg-white text-brand" : "text-white/80"]}>த</span>
-        <span class:list={["rounded-full px-3 py-[5px]", lang === "en" ? "bg-white text-brand" : "text-white/80"]}>EN</span>
+      <a href={other.pathname + other.search} id="langLink" data-lang={lang === "ta" ? "en" : "ta"} aria-label={lang === "ta" ? "English" : "தமிழ்"}
+        class="flex h-10 items-center rounded-lg border border-line bg-raise p-[3px] text-[13px] font-semibold">
+        <span class:list={["rounded-md px-2.5 py-1.5", lang === "ta" ? "bg-surface text-ink shadow-sm" : "text-mute"]}>த</span>
+        <span class:list={["rounded-md px-2.5 py-1.5", lang === "en" ? "bg-surface text-ink shadow-sm" : "text-mute"]}>EN</span>
       </a>
-      <button id="themeBtn" type="button" aria-label="Light / dark" class="grid size-[38px] place-items-center rounded-full bg-white/20 transition active:scale-95">
-        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+      <button id="themeBtn" type="button" aria-label="Light / dark" class={iconBtn}>
+        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
       </button>
     </div>
-    <form id="searchBar" action={home} method="get" class="mx-auto hidden max-w-[1120px] px-4 pb-3">
+    <form id="searchBar" action={home} method="get" role="search" class="mx-auto hidden max-w-[1180px] px-4 pb-3">
       {lang === "en" && <input type="hidden" name="lang" value="en" />}
-      <input name="q" type="search" placeholder={tr(lang, "search")} value={Astro.url.searchParams.get("q") ?? ""}
-        class="h-11 w-full rounded-xl bg-white/95 px-3.5 text-slate-900 outline-none placeholder:text-slate-500" />
+      <input name="q" type="search" aria-label={tr(lang, "search")} placeholder={tr(lang, "search")} value={Astro.url.searchParams.get("q") ?? ""}
+        class="h-11 w-full rounded-lg border border-line bg-raise px-3.5 text-ink outline-none placeholder:text-mute focus:border-accent" />
     </form>
-    <nav aria-label="Districts" class="mx-auto flex max-w-[1120px] gap-1 overflow-x-auto px-4 pb-2 text-[13px] font-bold [scrollbar-width:none]">
-      <a href={lang === "en" ? "/?lang=en" : "/"} class:list={["shrink-0 rounded-full px-3 py-1 transition", !d ? "bg-white text-brand" : "bg-white/15 hover:bg-white/25"]}>{tr(lang, "all")}</a>
-      {DISTRICTS.map((x) => <a href={lang === "en" ? `/${x.id}?lang=en` : `/${x.id}`} class:list={["shrink-0 rounded-full px-3 py-1 whitespace-nowrap transition", d?.id === x.id ? "bg-white text-brand" : "bg-white/15 hover:bg-white/25"]}>{lang === "ta" ? x.short_ta : x.short_en}</a>)}
+    <nav aria-label="Districts" class="mx-auto flex max-w-[1180px] gap-1.5 overflow-x-auto px-4 pb-2.5 text-[13.5px] font-semibold [scrollbar-width:none]">
+      <a href={tl("/")} aria-current={!d ? "page" : undefined}
+        class:list={["flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 transition", !d ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink hover:border-mute"]}>
+        <img src="/brand/360.webp" alt="" width="20" height="20" class="size-5 rounded-full" />{tr(lang, "all")}</a>
+      {DISTRICTS.map((x) => (
+        <a href={tl(`/${x.id}`)} aria-current={d?.id === x.id ? "page" : undefined}
+          class:list={["flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 whitespace-nowrap transition", d?.id === x.id ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink hover:border-mute"]}>
+          <img src={`/brand/${x.id}.webp`} alt="" width="20" height="20" loading="lazy" class="size-5 rounded-full" />{lang === "ta" ? x.short_ta : x.short_en}</a>))}
     </nav>
-    <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
   </header>
 
-  <main class="mx-auto w-full max-w-[1120px] flex-1 px-4"><slot /></main>
+  <main id="main" class="mx-auto w-full max-w-[1180px] flex-1 px-4"><slot /></main>
 
-  <footer class="mt-10 bg-linear-to-r from-brand via-brand-fresh to-sky360 text-white/90">
-    <div class="h-[3px] bg-linear-to-r from-sun via-orange360 to-red360"></div>
-    <div class="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 py-6 text-[13px]">
-      <span>{desc && !title ? desc : d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout")}</span>
-      <a href={lang === "en" ? "/?lang=en" : "/"} class="font-bold text-white">{tr(lang, "allDistricts")}</a>
-      {d?.insta && <a href={`https://www.instagram.com/${d.insta}/`} target="_blank" rel="noopener" class="font-bold text-white">Instagram @{d.insta}</a>}
+  <footer class="mt-12 border-t border-line bg-surface">
+    <div class="mx-auto grid max-w-[1180px] gap-6 px-4 py-8 text-[13.5px] sm:grid-cols-[1.4fr_1fr]">
+      <div class="flex gap-3">
+        <img src="/brand/360.webp" alt="" width="44" height="44" loading="lazy" class="size-11 shrink-0 rounded-full border border-line" />
+        <div>
+          <b class="font-head text-base font-bold">News <span class="text-accent">360</span></b>
+          <p class="mt-1 text-mute">{desc && !title ? desc : d ? `${lang === "ta" ? d.ta : d.en} ${tr(lang, "aboutOne")}` : tr(lang, "hubAbout")}</p>
+          <p class="mt-2 text-mute">📰 {tr(lang, "sourceNote")}</p>
+        </div>
+      </div>
+      <nav aria-label="All districts" class="flex flex-wrap content-start gap-x-4 gap-y-2 font-semibold">
+        <a href={tl("/")} class="hover:text-accent">{tr(lang, "allDistricts")}</a>
+        {DISTRICTS.map((x) => <a href={tl(`/${x.id}`)} class="hover:text-accent">{lang === "ta" ? x.short_ta : x.short_en} 360</a>)}
+        {d?.insta && <a href={`https://www.instagram.com/${d.insta}/`} target="_blank" rel="noopener" class="text-ig">Instagram @{d.insta}</a>}
+      </nav>
     </div>
   </footer>
 
   <script>
     const $ = (s: string) => document.querySelector(s) as HTMLElement;
-    $("#searchBtn").onclick = () => { $("#searchBar").classList.toggle("hidden"); ($("#searchBar input[name=q]") as HTMLInputElement).focus(); };
+    $("#searchBtn").onclick = () => {
+      const open = $("#searchBar").classList.toggle("hidden") === false;
+      $("#searchBtn").setAttribute("aria-expanded", String(open));
+      if (open) ($("#searchBar input[name=q]") as HTMLInputElement).focus();
+    };
     $("#themeBtn").onclick = () => {
       const r = document.documentElement, t = r.dataset.theme === "dark" ? "light" : "dark";
       r.dataset.theme = t; try { localStorage.setItem("n360t", t); } catch (e) {}
