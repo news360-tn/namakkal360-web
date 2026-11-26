@@ -61,6 +61,7 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 <!-- recent-changes:start (updated automatically by .github/workflows/context.yml - do not edit by hand) -->
 | Date | Commit | Change |
 |---|---|---|
+| 2026-11-26 | `dc77fcd` | News360 website redesign: backend design system, pencil-sketch news pictures, Instagram/Facebook/YouTube links, clear source + safe note, news360.pages.dev address and deploy workflow |
 | 2026-11-22 | `1d4ff91` | One site for all 7 districts: all-district home, district pages (/coimbatore ...), taluks and towns of every district, district column (migration), district in ingest; old links redirect |
 | 2026-11-19 | `a81ddfe` | Dependencies: security updates (astro 7.4.13, undici 7.30.1, wrangler 4.163.0) - npm audit now 0 issues; tests and build pass |
 | 2026-10-27 | `68778b2` | PROJECT_CONTEXT.md: how the website works, owner rules, files, settings; recent changes updated automatically after every code commit |
