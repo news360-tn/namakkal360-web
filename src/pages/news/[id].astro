@@ -50,16 +50,16 @@ const crumbs = { "@context": "https://schema.org", "@type": "BreadcrumbList", it
         : <span class:list={["grid size-full place-items-center", t.text, t.soft]} set:html={icon(n.type, "size-14")} />}
       {n.images[0] && <figcaption class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-linear-to-t from-black/55 to-transparent px-3 pt-6 pb-2 text-[11.5px] font-medium text-white">
         <span>✏️ {tr(lang, "sketchNote")}</span>
-        <a href={n.images[0]} target="_blank" rel="noopener" class="shrink-0 rounded-md bg-white/90 px-2 py-1 font-semibold text-slate-900 hover:bg-white">📷 {tr(lang, "photo")}</a>
+        <a href={n.images[0]} target="_blank" rel="noopener" class="shrink-0 rounded-md bg-white/90 px-2.5 py-2 font-semibold text-slate-900 hover:bg-white">📷 {tr(lang, "photo")}</a>
       </figcaption>}
     </figure>
     <div class="px-4 pt-4 pb-6 sm:p-7">
-      <a href={back} class="text-[13px] font-semibold text-accent hover:underline">← {dName} {tr(lang, "back")}</a>
+      <a href={back} class="inline-flex min-h-8 items-center text-[13px] font-semibold text-accent hover:underline">← {dName} {tr(lang, "back")}</a>
       <p class="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] font-semibold text-mute">
         <span class:list={["size-2 rounded-full", t.bg]}></span><b class={t.text}>{t[lang]}</b> · {pn} · {lang === "ta" ? d.short_ta : d.short_en} · {when(n, lang)}
       </p>
       <h1 class="mt-2 font-head text-[24px] leading-snug font-bold text-balance sm:text-[30px]">{title(n, lang)}</h1>
-      {paper && <a href={n.source_url} target="_blank" rel="noopener nofollow" class="mt-2 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-mute hover:text-accent">📰 {tr(lang, "source")}: <span class="text-ink underline decoration-line underline-offset-2">{paper}</span> ↗</a>}
+      {paper && <a href={n.source_url} target="_blank" rel="noopener nofollow" class="mt-1 inline-flex min-h-8 items-center gap-1.5 text-[13.5px] font-semibold text-mute hover:text-accent">📰 {tr(lang, "source")}: <span class="text-ink underline decoration-line underline-offset-2">{paper}</span> ↗</a>}
       {lang === "en" && !n.body_en && <p class="mt-2 text-sm font-medium text-mute">{tr(lang, "tamilOnly")}</p>}
       <div class="mt-4 space-y-4 text-[17px] leading-[1.85] sm:text-[17.5px]">
         {para.lead && <p class="border-l-4 border-accent pl-3 text-[18px] leading-[1.7] font-semibold sm:text-[19px]">{para.lead}</p>}

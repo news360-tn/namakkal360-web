@@ -56,7 +56,7 @@ export const links = (n: News): [Platform, string][] =>
 export function sourceHtml(n: News, lang: Lang, cls = ""): string {
   const name = sourceName(n.source_url, lang);
   if (!name) return "";
-  return `<a href="${esc(n.source_url)}" target="_blank" rel="noopener nofollow" class="relative z-10 inline-flex max-w-full items-center gap-1 truncate text-[12.5px] font-semibold text-mute hover:text-accent ${cls}"><span aria-hidden="true">📰</span><span class="truncate">${esc(tr(lang, "source"))}: <span class="text-ink underline decoration-line underline-offset-2">${esc(name)}</span></span></a>`;
+  return `<a href="${esc(n.source_url)}" target="_blank" rel="noopener nofollow" class="relative z-10 inline-flex min-h-8 max-w-full items-center gap-1 truncate text-[12.5px] font-semibold text-mute hover:text-accent ${cls}"><span aria-hidden="true">📰</span><span class="truncate">${esc(tr(lang, "source"))}: <span class="text-ink underline decoration-line underline-offset-2">${esc(name)}</span></span></a>`;
 }
 
 /** the news photo as a pencil sketch (the #sketch filter in Base.astro) on a paper-white tile */
