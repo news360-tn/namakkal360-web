@@ -61,6 +61,7 @@ set -a && . ./.env && set +a && npx wrangler deploy                     # put th
 <!-- recent-changes:start (updated automatically by .github/workflows/context.yml - do not edit by hand) -->
 | Date | Commit | Change |
 |---|---|---|
+| 2026-11-26 | `d9f32c6` | deploy workflow: skip with a notice (not a red failure) until the Cloudflare secrets are added |
 | 2026-11-26 | `e3aa23a` | Website: bigger tap targets for text links, header fits small phones |
 | 2026-11-26 | `0c0c181` | deploy workflow: Pages steps run inside pages/ |
 | 2026-11-26 | `d977bd0` | Website: keep saving news if the database update is not applied yet |
